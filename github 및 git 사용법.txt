@@ -38,3 +38,8 @@ git(CLI)
 - $ git merge branch_name // 다른 브랜치를 현재 브랜치로 통합, main과 합칠 거면 main으로 checkout한 후 해야 함
 - $ git branch -d branch_name // 로컬에서 branch delete, merge가 끝난 후 안 쓰는 branch 삭제
 - $ git push origin --delete remotebranch_name // 원격에서 branch delete
+
+
+참고 자료
+https://git-scm.com/book/ko/v2/Git%EC%9D%98-%EA%B8%B0%EC%B4%88-Git-%EC%A0%80%EC%9E%A5%EC%86%8C-%EB%A7%8C%EB%93%A4%EA%B8%B0
+https://backlog.com/git-tutorial/kr/
