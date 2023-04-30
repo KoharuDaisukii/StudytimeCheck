@@ -1,7 +1,7 @@
 github
 1. Issues
 - 본인이 하려는 issue에 들어가서 Assignees 설정
-- Development에 branch 만들어서 작업 후 Merge
+- Development에 branch 연결하고 작업 후 Merge
 - issue 처리했으면 close
 - 이렇게 쓰는 게 맞는지는 몰?루
 
