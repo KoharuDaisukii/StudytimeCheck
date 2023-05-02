@@ -3,14 +3,46 @@
 #include <string.h> // strlen
 #include <ctype.h> // toupper
 #include <sys/stat.h> // mkdir
-#include <sys/types.h> // mkdir
+#include <sys/types.h> // mkdir, lseek
+#include <fcntl.h> // open
 #include <dirent.h> // struct dirent
-#include <unistd.h> // chdir
+#include <unistd.h> // chdir, write, lseek
 #include <curses.h>
+#include <time.h> // time, struct tm
 
-#define USER_INFO_DIR "user_info"
+#define USER_INFO_DIR "users"
+#define USER_INFO_FILE "user_info.txt"
+#define NO_GROUP "default"
 
-DIR* login(char* wantID); // login 성공: UID directory 포인터 return
+typedef struct Studyuser
+{
+	char user_ID[11];
+	char group_ID[11];
+	// 가입 일자
+	// 최종 접속 시간
+	// 또 뭐 넣지
+} Studyuser;
+
+typedef struct timelog
+{	
+	// Studyuser info; 
+	struct tm* start_time; // 공부 시작 시간
+	struct tm* finish_time; // 공부 종료 시간
+} timelog;
+
+/* struct tm {
+   int tm_sec;         // 초,  range 0 to 59      
+   int tm_min;         // 분, range 0 to 59             
+   int tm_hour;        // 시간, range 0 to 23  
+   int tm_mday;        // 일, range 1 to 31  
+   int tm_mon;         // 월, range 0 to 11     
+   int tm_year;        // 1900년 부터의 년                
+   int tm_wday;        // 요일, range 일(0) to 토(6) 
+   int tm_yday;        // 1년 중 경과 일, range 0 to 365 
+   int tm_isdst;       // 섬머타임 실시 여부 (양수, 0, 음수)              
+}; */
+
+DIR* login(char* UID); // login 성공: UID directory 포인터 return
 
 
 int main(int argc, char* argv[])
@@ -37,7 +69,7 @@ int main(int argc, char* argv[])
 	initscr();
 	noecho();
 	move(1, 1);
-	printw("Welcome! %s", UID);
+	printw("Welcome! %s!", UID);
 	move(3, 1);
 	printw("1. Studytime Measuring");
 	move(4, 1);
@@ -60,22 +92,34 @@ int main(int argc, char* argv[])
 	}
 	endwin();
 	closedir(UID_dirptr); // 로그아웃
-	printf("%s님 bye bye\n", UID);
+	printf("%s님, Bye Bye!\n", UID);
 	return 0;
 }
 
 DIR* login(char* UID)
 {
 	DIR *dir_ptr;
-	struct dirent *direntp;
 	
 	if(chdir(USER_INFO_DIR) == -1) // 유저 정보가 담긴 디렉토리로 이동
 	{
 		perror(USER_INFO_DIR);
 		exit(1);
 	}
+	
+	int fd, user_exist = 0; //
+	if((fd = open(USER_INFO_FILE, O_RDWR)) == -1)
+	{
+		perror("왜 안 열려");
+		exit(1);
+	}
+	
+	Studyuser s_userptr;
+	while(read(fd, &s_userptr, sizeof(Studyuser)) >= sizeof(Studyuser))
+		if(strcmp(s_userptr.user_ID, UID) == 0)
+			user_exist = 1;
+	
 	// 한글 ID 입력하면 컷하는 기능도 필요할 듯
-	if((dir_ptr = opendir(UID)) == NULL) // UID 폴더 존재하는 지 확인
+	if((dir_ptr = opendir(UID)) == NULL || user_exist == 0) // UID 폴더 존재하는 지 확인
 	{
 		printf("ID가 존재하지 않습니다. 해당 ID로 가입하시겠습니까? (Y/N)\n");
 		char yesno = toupper(getchar());
@@ -97,6 +141,14 @@ DIR* login(char* UID)
 				perror("안 열려요");
 				exit(1);
 			}
+			
+			Studyuser newuser;
+			strcpy(newuser.user_ID, UID);
+			strcpy(newuser.group_ID, NO_GROUP);
+			lseek(fd, 0, SEEK_END);
+			write(fd, &newuser, sizeof(Studyuser));
+			close(fd);
+			
 			printf("가입 완료되었습니다. %s님 환영합니다.\n", UID);
 			sleep(3); // 로딩하는 척
 		}
