@@ -23,7 +23,7 @@ typedef struct Studyuser
 	// 또 뭐 넣지
 } Studyuser;
 
-typedef struct timelog
+typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 {	
 	// Studyuser info; 
 	struct tm* start_time; // 공부 시작 시간
@@ -107,7 +107,7 @@ DIR* login(char* UID)
 	}
 	
 	int fd, user_exist = 0; //
-	if((fd = open(USER_INFO_FILE, O_RDWR)) == -1)
+	if((fd = open(USER_INFO_FILE, O_RDWR)) == -1) // 유저들의 정보를 담아놓은 파일을 Open
 	{
 		perror("왜 안 열려");
 		exit(1);
@@ -115,11 +115,11 @@ DIR* login(char* UID)
 	
 	Studyuser s_userptr;
 	while(read(fd, &s_userptr, sizeof(Studyuser)) >= sizeof(Studyuser))
-		if(strcmp(s_userptr.user_ID, UID) == 0)
-			user_exist = 1;
+		if(strcmp(s_userptr.user_ID, UID) == 0) // 해당하는 UID의 유저가 있는지 탐색
+			user_exist = 1; // 있네
 	
 	// 한글 ID 입력하면 컷하는 기능도 필요할 듯
-	if((dir_ptr = opendir(UID)) == NULL || user_exist == 0) // UID 폴더 존재하는 지 확인
+	if((dir_ptr = opendir(UID)) == NULL || user_exist == 0) // UID 폴더 존재하는 지 확인, 그룹 생각 안 하고 일단 함
 	{
 		printf("ID가 존재하지 않습니다. 해당 ID로 가입하시겠습니까? (Y/N)\n");
 		char yesno = toupper(getchar());
@@ -142,20 +142,22 @@ DIR* login(char* UID)
 				exit(1);
 			}
 			
+			// user_info 파일에 유저 정보 추가
 			Studyuser newuser;
 			strcpy(newuser.user_ID, UID);
 			strcpy(newuser.group_ID, NO_GROUP);
 			lseek(fd, 0, SEEK_END);
 			write(fd, &newuser, sizeof(Studyuser));
 			close(fd);
+			// 추가 완료
 			
 			printf("가입 완료되었습니다. %s님 환영합니다.\n", UID);
-			sleep(3); // 로딩하는 척
+			sleep(2); // 로딩하는 척
 		}
 		else
 		{
 			printf("\'가입하지 않기\'를 선택하셨습니다. 프로그램이 종료됩니다.\n");
-			sleep(3);
+			sleep(2);
 			exit(1);
 		}
 	}
