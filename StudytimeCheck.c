@@ -26,6 +26,7 @@ typedef struct Studyuser
 typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 {	
 	// Studyuser info; 
+	char subject[30];
 	struct tm* start_time; // 공부 시작 시간
 	struct tm* finish_time; // 공부 종료 시간
 } timelog;
@@ -100,14 +101,14 @@ DIR* login(char* UID)
 {
 	DIR *dir_ptr;
 	
-	if(chdir(USER_INFO_DIR) == -1) // 유저 정보가 담긴 디렉토리로 이동
+	if(chdir(USER_INFO_DIR) == -1) // 유저 정보가 담긴 디렉토리로 이동, 없어도 알아서 만들어야 하는데 고치기 귀찮음
 	{
 		perror(USER_INFO_DIR);
 		exit(1);
 	}
 	
 	int fd, user_exist = 0; //
-	if((fd = open(USER_INFO_FILE, O_RDWR)) == -1) // 유저들의 정보를 담아놓은 파일을 Open
+	if((fd = open(USER_INFO_FILE, O_RDWR)) == -1) // 유저들의 정보를 담아놓은 파일을 Open, 얘도 없어도 알아서 creat 해야 하는데
 	{
 		perror("왜 안 열려");
 		exit(1);
