@@ -27,21 +27,10 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 {	
 	// Studyuser info; 
 	char subject[30];
-	struct tm* start_time; // 공부 시작 시간
-	struct tm* finish_time; // 공부 종료 시간
+	time_t start_time; // 공부 시작 시간
+	time_t finish_time; // 공부 종료 시간
+	double studytime; // 공부 시간
 } timelog;
-
-/* struct tm {
-   int tm_sec;         // 초,  range 0 to 59      
-   int tm_min;         // 분, range 0 to 59             
-   int tm_hour;        // 시간, range 0 to 23  
-   int tm_mday;        // 일, range 1 to 31  
-   int tm_mon;         // 월, range 0 to 11     
-   int tm_year;        // 1900년 부터의 년                
-   int tm_wday;        // 요일, range 일(0) to 토(6) 
-   int tm_yday;        // 1년 중 경과 일, range 0 to 365 
-   int tm_isdst;       // 섬머타임 실시 여부 (양수, 0, 음수)              
-}; */
 
 DIR* login(char* UID); // login 성공: UID directory 포인터 return
 
