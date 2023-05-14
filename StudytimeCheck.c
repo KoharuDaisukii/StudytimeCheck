@@ -38,6 +38,11 @@ DIR* login(char* UID); // login 성공: UID directory 포인터 return
 void main_screen(char* UID);
 void menu4();
 void menu5();
+void menu3();
+void menu3_screen();
+void menu3_join();
+void menu3_leave();
+void menu3_rank();
 
 int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보 바로 뒤를 계속 가리킬 예정
 
@@ -205,6 +210,43 @@ void main_screen(char* UID)
 	printw("5. Settings");
 	move(8, 1);
 	printw("6. Exit");
+	refresh();
+}
+
+void menu3() {
+	initscr();
+	noecho();
+	clear();
+
+	char menu;
+	while (1) {
+		menu3_screen();
+		menu = getch();
+		//if(menu=='1') menu3_join();
+		//if(menu=='2') menu3_leave();
+		//if(menu=='3') menu3_rank();
+		if (menu == '4') {
+			break;
+		}
+	}
+	clear();
+	refresh();
+	endwin();
+	return;
+}
+void menu3_screen() {
+	move(1, 1);
+	printw("You selected Group menu !");
+	move(3, 1);
+	printw("Select group menu that you want.");
+	move(6, 1);
+	printw("1. Group Join");
+	move(7, 1);
+	printw("2. Group Leave");
+	move(8, 1);
+	printw("3. Group Ranking");
+	move(9, 1);
+	printw("4. Go back");
 	refresh();
 }
 
