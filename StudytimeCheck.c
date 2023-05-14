@@ -12,14 +12,14 @@
 
 #define USERS_INFO_DIR "users"
 #define USERS_INFO_FILE "users.txt"
-#define NO_GROUP "default"
+#define NO_GROUP "no_group"
 
 typedef struct Studyuser
 {
 	char user_ID[11];
 	char group_ID[11];
 	time_t signup;// 가입 일자
-	time_t lastaccess;// 최종 접속 시간
+	time_t lastlogin;// 최종 접속 시간
 	// 또 뭐 넣지
 } Studyuser;
 
@@ -34,6 +34,10 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 } timelog;
 
 DIR* login(char* UID); // login 성공: UID directory 포인터 return
+
+void main_screen(char* UID);
+void menu4();
+void menu5();
 
 int usersFd; // USERS_INFO_FILE file descriptor
 
@@ -60,31 +64,21 @@ int main(int argc, char* argv[])
 	
 	initscr();
 	noecho();
-	move(1, 1);
-	printw("Welcome! %s!", UID);
-	move(3, 1);
-	printw("1. Studytime Measuring");
-	move(4, 1);
-	printw("2. Display Stats");
-	move(5, 1);
-	printw("3. Group");
-	move(6, 1);
-	printw("4. My profile");
-	move(7, 1);
-	printw("5. Settings");
-	move(8, 1);
-	printw("6. Exit");
+	
 	char menu;
 	while(1)
 	{
+		main_screen(UID);
 		menu = getch();
 		// if(menu == '1') menu1();
 		// if(menu == '2') menu2();
 		// if(menu == '3') menu3();
-		// if(menu == '4') menu4();
+		if(menu == '4') menu4();
 		// if(menu == '5') menu5();
 		if(menu == '6') break;
 	}
+	
+	// delwin(main_screen);
 	endwin();
 	closedir(UID_dirptr); // 로그아웃
 	close(usersFd);
@@ -132,10 +126,13 @@ DIR* login(char* UID)
 		close(tempfd1);
 	}
 
-	Studyuser s_userptr;
-	while(read(usersFd, &s_userptr, sizeof(Studyuser)) >= sizeof(Studyuser))	
-		if(strcmp(s_userptr.user_ID, UID) == 0) // 해당하는 UID의 유저가 있는지 탐색
+	Studyuser s_user;
+	while(read(usersFd, &s_user, sizeof(Studyuser)) >= sizeof(Studyuser))	
+		if(strcmp(s_user.user_ID, UID) == 0) // 해당하는 UID의 유저가 있는지 탐색
+		{	
 			user_exist = 1; // 있네
+			break; // file pointer는 찾은 유저의 기록 바로 다음을 가리킴
+		}
 			
 	// 한글 ID 입력하면 컷하는 기능도 필요할 듯
 	if((dir_ptr = opendir(UID)) == NULL || user_exist == 0) // UID 폴더 존재하는 지 확인, 그룹 생각 안 하고 일단 함
@@ -165,12 +162,15 @@ DIR* login(char* UID)
 			Studyuser newuser;
 			strcpy(newuser.user_ID, UID);
 			strcpy(newuser.group_ID, NO_GROUP);
+			newuser.signup = time(NULL);
+			newuser.lastlogin = time(NULL);
 			lseek(usersFd, 0, SEEK_END);
 			write(usersFd, &newuser, sizeof(Studyuser));
 			// 추가 완료
 			
 			printf("가입 완료되었습니다. %s님 환영합니다.\n", UID);
 			sleep(2); // 로딩하는 척
+			return dir_ptr;
 		}
 		else
 		{
@@ -180,5 +180,76 @@ DIR* login(char* UID)
 		}
 	}
 	
+	// 로그인 시간 갱신
+	s_user.lastlogin = time(NULL);
+	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
+	write(usersFd, &s_user, sizeof(Studyuser));
+	// 추가 완료
+	
 	return dir_ptr;
+}
+
+void main_screen(char* UID)
+{
+	move(1, 1);
+	printw("Welcome! %s!", UID);
+	move(3, 1);
+	printw("1. Studytime Measuring");
+	move(4, 1);
+	printw("2. Display Stats");
+	move(5, 1);
+	printw("3. Group");
+	move(6, 1);
+	printw("4. My profile");
+	move(7, 1);
+	printw("5. Settings");
+	move(8, 1);
+	printw("6. Exit");
+	refresh();
+}
+
+void menu4()
+{
+	WINDOW *win = newwin(20, 50, 1, 1);
+	box(win, '|', '+');
+	
+	Studyuser s_user;
+	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
+	read(usersFd, &s_user, sizeof(Studyuser));
+	
+	struct tm *tm_ptr;
+
+	mvwprintw(win, 3, 2, "%s\'s profile", s_user.user_ID);
+	mvwprintw(win, 5, 2, "User ID: %s", s_user.user_ID);
+	mvwprintw(win, 6, 2, "Group ID: %s", s_user.group_ID);
+	
+	if((tm_ptr = localtime(&(s_user.signup))) == NULL)
+	{
+		perror("localtime");
+		return;
+	}
+	mvwprintw(win, 8, 2, "Sign up time: %25s", asctime(tm_ptr));
+	if((tm_ptr = localtime(&(s_user.lastlogin))) == NULL)
+	{
+		perror("localtime");
+		return;
+	}
+	mvwprintw(win, 9, 2, "Last login time: %25s", asctime(tm_ptr));
+	mvwprintw(win, 17, 2, "%s", "\'q\' to quit");
+	
+	wrefresh(win);
+	
+	char quit = '0';
+	while((quit = getch()) != 'q');
+	clear();
+	wrefresh(win);
+	delwin(win);
+	
+	return;
+}
+
+void menu5()
+{
+	WINDOW *win = newwin(20, 50, 1, 1);
+	box(win, '|', '+');
 }
