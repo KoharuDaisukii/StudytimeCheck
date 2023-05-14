@@ -39,7 +39,7 @@ void main_screen(char* UID);
 void menu4();
 void menu5();
 
-int usersFd; // USERS_INFO_FILE file descriptor
+int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보 바로 뒤를 계속 가리킬 예정
 
 int main(int argc, char* argv[])
 {
@@ -213,7 +213,7 @@ void menu4()
 	WINDOW *win = newwin(20, 50, 1, 1);
 	box(win, '|', '+');
 	
-	Studyuser s_user;
+	Studyuser s_user; // 내 정보 읽어오기
 	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
 	read(usersFd, &s_user, sizeof(Studyuser));
 	
@@ -223,24 +223,24 @@ void menu4()
 	mvwprintw(win, 5, 2, "User ID: %s", s_user.user_ID);
 	mvwprintw(win, 6, 2, "Group ID: %s", s_user.group_ID);
 	
-	if((tm_ptr = localtime(&(s_user.signup))) == NULL)
+	if((tm_ptr = localtime(&(s_user.signup))) == NULL) // time_t-> struct tm
 	{
 		perror("localtime");
 		return;
 	}
-	mvwprintw(win, 8, 2, "Sign up time: %25s", asctime(tm_ptr));
-	if((tm_ptr = localtime(&(s_user.lastlogin))) == NULL)
+	mvwprintw(win, 8, 2, "Sign up time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
+	if((tm_ptr = localtime(&(s_user.lastlogin))) == NULL) // time_t -> struct tm
 	{
 		perror("localtime");
 		return;
 	}
-	mvwprintw(win, 9, 2, "Last login time: %25s", asctime(tm_ptr));
+	mvwprintw(win, 9, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
 	mvwprintw(win, 17, 2, "%s", "\'q\' to quit");
 	
 	wrefresh(win);
 	
 	char quit = '0';
-	while((quit = getch()) != 'q');
+	while((quit = getch()) != 'q'); // q 누르면 나가기
 	clear();
 	wrefresh(win);
 	delwin(win);
