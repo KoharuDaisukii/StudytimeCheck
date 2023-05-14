@@ -40,9 +40,9 @@ void menu4();
 void menu5();
 void menu3();
 void menu3_screen();
-/*void menu3_join();
+void menu3_join();
 void menu3_leave();
-void menu3_rank();*/
+void menu3_rank();
 
 int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보 바로 뒤를 계속 가리킬 예정
 
