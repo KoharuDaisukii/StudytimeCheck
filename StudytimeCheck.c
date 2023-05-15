@@ -234,6 +234,53 @@ void menu3() {
 	endwin();
 	return;
 }
+void menu3_join() {
+
+	char groupid[MAX];
+	char userid[MAX];
+	printf("Insert your User ID : ");
+	scanf("%s", userid);
+
+	printf("Insert your Group ID : ");
+	scanf("%s", groupid);
+
+	// 파일을 오픈하고
+	// 파일을 읽어 UserID 찾고
+	// 해당 UserId의 GroupID를 rewrite한다
+
+
+}
+void menu3_leave() {
+
+	char c;
+	char userid[MAX];
+	printf("Insert your User ID : ");
+	scanf("%s", userid);
+
+	//파일을 오픈하고
+	//파일에서 USERID 찾고
+	//그에 대한 구조체를 가져온다
+
+	printf("Do you want to leave %s ? (y/n)");
+	c = getch();
+	if (c == 'y') {
+		//파일 오픈하고
+		//파일에서 해당 USERID 찾고
+		//그 GROUPID를 no_group으로지정하기
+	}
+
+}
+void menu3_rank() {
+
+	char userid[MAX];
+	printf("Insert your User ID : ");
+	scanf("%s", userid);
+
+	/*파일을 열고 해당 UID를 찾는다
+	  해당 UID GID를 가지는 모든 사용자의 정보를 불러온다
+	  시간을 계산하고 시간에 따라 sorting하고
+	  순서대로 정보를 보여줌 */
+}
 void menu3_screen() {
 	int x = 3;
 	int y = 7;
