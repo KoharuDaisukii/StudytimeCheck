@@ -14,6 +14,8 @@
 #define USERS_INFO_FILE "users.txt"
 #define NO_GROUP "no_group"
 
+#define MAX 50
+
 typedef struct Studyuser
 {
 	char user_ID[11];
@@ -36,15 +38,20 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 DIR* login(char* UID); // login 성공: UID directory 포인터 return
 
 void main_screen(char* UID);
-void menu4();
-void menu5();
-void menu3();
-/*void menu3_screen();
-void menu3_join();
+void menu3_screen();
+/*void menu3_join();
 void menu3_leave();
 void menu3_rank();
 */
-int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보 바로 뒤를 계속 가리킬 예정
+void menu3();
+void menu4();
+void menu5();
+void menu5_screen(WINDOW* win);
+void menu5_deleteAccount(WINDOW* win);
+
+int rmdir_r(const char* path);
+
+int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보를 계속 가리킬 예정
 
 int main(int argc, char* argv[])
 {
@@ -79,7 +86,7 @@ int main(int argc, char* argv[])
 		// if(menu == '2') menu2();
 		// if(menu == '3') menu3();
 		if(menu == '4') menu4();
-		// if(menu == '5') menu5();
+		if(menu == '5') menu5();
 		if(menu == '6') break;
 	}
 	
@@ -261,7 +268,7 @@ void menu3_leave() {
 	//파일에서 USERID 찾고
 	//그에 대한 구조체를 가져온다
 
-	printf("Do you want to leave %s ? (y/n)");
+	printf("Do you want to leave? (y/n)");
 	c = getch();
 	if (c == 'y') {
 		//파일 오픈하고
@@ -540,7 +547,7 @@ void menu3_screen() {
 
 void menu4()
 {
-	WINDOW *win = newwin(20, 50, 1, 1);
+	WINDOW *win = newwin(20, 60, 1, 1);
 	box(win, '|', '+');
 	
 	Studyuser s_user; // 내 정보 읽어오기
@@ -570,7 +577,7 @@ void menu4()
 	wrefresh(win);
 	
 	char quit = '0';
-	while((quit = getch()) != 'q'); // q 누르면 나가기
+	while((quit = wgetch(win)) != 'q'); // q 누르면 나가기
 	clear();
 	wrefresh(win);
 	delwin(win);
@@ -578,8 +585,76 @@ void menu4()
 	return;
 }
 
+
+/*
+typedef struct
+{
+	short id; // device id
+	int x, y, z; // 마우스 커서 위치
+	mmask_t bstate; // 버튼의 상태 비트
+} MEVENT;
+*/
 void menu5()
 {
-	WINDOW *win = newwin(20, 50, 1, 1);
+	WINDOW *win = newwin(20, 60, 1, 1);
+	
+	char c;
+	while(1)
+	{
+		menu5_screen(win);
+		c = wgetch(win);
+		if(c == 'q') break;
+		if(c == '1');
+		if(c == '2');
+		if(c == '3') menu5_deleteAccount(win);		
+	}
+	wclear(win);
+	wrefresh(win);
+	delwin(win);
+}
+
+void menu5_screen(WINDOW *win)
+{
 	box(win, '|', '+');
+	mvwprintw(win, 3, 2, "Settings");
+	mvwprintw(win, 5, 2, "1. ??");
+	mvwprintw(win, 6, 2, "2. ???");
+	mvwprintw(win, 7, 2, "3. Delete account");
+	wrefresh(win);
+}
+
+void menu5_deleteAccount(WINDOW* win)
+{
+	char yesno;
+	
+	mvwprintw(win, 9, 2, "Delete your account from StudytimeCheck (Y/N)"); wrefresh(win);
+	while(1)
+	{
+		yesno = wgetch(win);
+		yesno = toupper(yesno);
+		if(yesno == 'Y')
+		{
+			mvwprintw(win, 11, 2, "Getout");
+			wrefresh(win);
+			sleep(2);
+			break;
+		}
+		if(yesno == 'N')	
+		{
+			mvwprintw(win, 11, 2, "hyu");
+			wrefresh(win);
+			sleep(2);
+			break;
+		}
+		wrefresh(win);	
+	}
+	wclear(win);
+	wrefresh(win);
+	noecho(); cbreak();
+	return;
+}
+
+int rmdir_r(const char* path)
+{
+	
 }
