@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h> // strlen
-#include <ctype.h> // toupper
+#include <ctype.h> // toupper, isalpha, isdigit
 #include <sys/stat.h> // mkdir
 #include <sys/types.h> // mkdir, lseek
 #include <fcntl.h> // open
@@ -35,9 +35,9 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 	double studytime; // 공부 시간
 } timelog;
 
-DIR* login(char* UID); // login 성공: UID directory 포인터 return
+DIR* login(); // login 성공: UID directory 포인터 return
 
-void main_screen(char* UID);
+void main_screen();
 void menu3_screen();
 /*void menu3_join();
 void menu3_leave();
@@ -52,6 +52,7 @@ void menu5_deleteAccount(WINDOW* win);
 int rmdir_r(const char* path);
 
 int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보를 계속 가리킬 예정
+char UID[11]; // 전역 변수로 쓰는 게 편할 것 같음
 
 int main(int argc, char* argv[])
 {
@@ -71,7 +72,7 @@ int main(int argc, char* argv[])
 		exit(3);
 	}
 	
-	char UID[11]; strcpy(UID, argv[1]); // 
+	strcpy(UID, argv[1]); // 
 	DIR* UID_dirptr = login(UID); // 로그인해서 UID 이름의 폴더를 엶
 	
 	initscr();
@@ -96,9 +97,9 @@ int main(int argc, char* argv[])
 	close(usersFd);
 	printf("%s님, Bye Bye!\n", UID);
 	return 0;
-}
+}	
 
-DIR* login(char* UID)
+DIR* login()
 {
 	DIR *dir_ptr;
 
@@ -201,7 +202,7 @@ DIR* login(char* UID)
 	return dir_ptr;
 }
 
-void main_screen(char* UID)
+void main_screen()
 {
 	move(1, 1);
 	printw("Welcome! %s!", UID);
@@ -620,6 +621,7 @@ void menu5_screen(WINDOW *win)
 	mvwprintw(win, 5, 2, "1. ??");
 	mvwprintw(win, 6, 2, "2. ???");
 	mvwprintw(win, 7, 2, "3. Delete account");
+	mvwprintw(win, 17, 2, "\'q\' to quit");
 	wrefresh(win);
 }
 
@@ -634,16 +636,41 @@ void menu5_deleteAccount(WINDOW* win)
 		yesno = toupper(yesno);
 		if(yesno == 'Y')
 		{
-			mvwprintw(win, 11, 2, "Getout");
+			mvwprintw(win, 11, 2, "Enter your ID if you really want to leave.");
 			wrefresh(win);
-			sleep(2);
+			mvwprintw(win, 17, 2, "             ");
+			mvwprintw(win, 13, 3, "          )");
+			mvwprintw(win, 13, 2, "(");
+			wrefresh(win);
+			char input[11] = "\0", input_c;
+			int i = 0;
+			while(1)
+			{
+				input_c = wgetch(win);
+				if(isalpha(input_c) || isdigit(input_c))
+				{	
+					if(i < 10)
+					{
+						mvwprintw(win, 13, 3 + i, "%c", input_c);
+						input[i++] = input_c;
+						input[i] = '\0';
+					}
+				}
+				if((input_c == '\b' || input_c == 127) && i > 0)
+				{	
+					mvwprintw(win, 13, 3 + --i, " ");
+					move(13, 1 + i);
+				}
+				if(input_c == '\n')
+					break;
+				wrefresh(win);
+			}
 			break;
 		}
 		if(yesno == 'N')	
 		{
-			mvwprintw(win, 11, 2, "hyu");
+			mvwprintw(win, 9, 2, "                                               ");
 			wrefresh(win);
-			sleep(2);
 			break;
 		}
 		wrefresh(win);	
@@ -658,3 +685,4 @@ int rmdir_r(const char* path)
 {
 	
 }
+
