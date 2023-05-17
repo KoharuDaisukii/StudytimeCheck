@@ -45,12 +45,13 @@ void menu3_rank();
 */
 void menu3();
 void menu4();
-void menu5();
+void menu5(DIR*);
 void menu5_screen(WINDOW* win);
-void menu5_deleteAccount(WINDOW* win);
+void menu5_deleteAccount(WINDOW* win, DIR*);
 
-int rmdir_r(const char* path);
+int rmdir_r(DIR* path);
 
+int user_dead = 0;
 int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보를 계속 가리킬 예정
 char UID[11]; // 전역 변수로 쓰는 게 편할 것 같음
 
@@ -87,8 +88,9 @@ int main(int argc, char* argv[])
 		// if(menu == '2') menu2();
 		// if(menu == '3') menu3();
 		if(menu == '4') menu4();
-		if(menu == '5') menu5();
+		if(menu == '5') menu5(UID_dirptr);
 		if(menu == '6') break;
+		if(user_dead == 1) break;
 	}
 	
 	// delwin(main_screen);
@@ -595,7 +597,7 @@ typedef struct
 	mmask_t bstate; // 버튼의 상태 비트
 } MEVENT;
 */
-void menu5()
+void menu5(DIR* dir_ptr)
 {
 	WINDOW *win = newwin(20, 60, 1, 1);
 	
@@ -607,7 +609,8 @@ void menu5()
 		if(c == 'q') break;
 		if(c == '1');
 		if(c == '2');
-		if(c == '3') menu5_deleteAccount(win);		
+		if(c == '3') menu5_deleteAccount(win, dir_ptr);
+		if(user_dead == 1) break;		
 	}
 	wclear(win);
 	wrefresh(win);
@@ -625,7 +628,7 @@ void menu5_screen(WINDOW *win)
 	wrefresh(win);
 }
 
-void menu5_deleteAccount(WINDOW* win)
+void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 {
 	char yesno;
 	
@@ -662,7 +665,28 @@ void menu5_deleteAccount(WINDOW* win)
 					move(13, 1 + i);
 				}
 				if(input_c == '\n')
+				{
+					if(strcmp(input, UID) == 0)
+					{
+						Studyuser left_user;
+						strcpy(left_user.user_ID, "DEAD_USER");
+						strcpy(left_user.group_ID, NO_GROUP);
+						left_user.signup = 0;
+						left_user.lastlogin = 0;
+						lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
+						write(usersFd, &left_user, sizeof(Studyuser));
+						if(rmdir_r(uid_dirptr) == -1)
+						{
+							perror("rmdir");
+							exit(50);
+						}
+						mvwprintw(win, 13, 2, "Deactivated your account. See you Again...");
+						wrefresh(win);
+						sleep(2);
+						user_dead = 1;
+					}
 					break;
+				}
 				wrefresh(win);
 			}
 			break;
@@ -681,8 +705,25 @@ void menu5_deleteAccount(WINDOW* win)
 	return;
 }
 
-int rmdir_r(const char* path)
+int rmdir_r(DIR* rm_dirptr) // 괜히 DIR*로 받았나
 {
-	
+	struct dirent *file = NULL;
+	char path[256];
+	char filename[1024];
+	getcwd(path, sizeof(path));
+	printf("path: %s\n", path);
+	while((file = readdir(rm_dirptr)) != NULL)
+	{
+		if(strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0)
+			continue;
+		sprintf(filename, "%s/%s", path, file->d_name);
+		if(unlink(filename) == -1)
+		{	
+			perror("unlink");
+			exit(60);
+		}
+	}
+	// closedir(rm_dirptr);
+	return rmdir(UID);
 }
 
