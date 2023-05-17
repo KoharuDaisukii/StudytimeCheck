@@ -15,6 +15,10 @@
 #define NO_GROUP "no_group"
 
 #define MAX 50
+#define ARROW_DOWN 2
+#define ARROW_UP 3
+#define ARROW_LEFT 4
+#define ARROW_RIGHT 5
 
 typedef struct Studyuser
 {
@@ -38,6 +42,10 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 DIR* login(); // login 성공: UID directory 포인터 return
 
 void main_screen();
+void menu2();
+void menu2_screen(WINDOW* win);
+void menu2_1(WINDOW* win); // 이름을 어칼까
+void day_stats(WINDOW* win, int year, int month, int day);
 void menu3_screen();
 /*void menu3_join();
 void menu3_leave();
@@ -78,6 +86,7 @@ int main(int argc, char* argv[])
 	
 	initscr();
 	noecho();
+	curs_set(0);
 	
 	char menu;
 	while(1)
@@ -85,7 +94,7 @@ int main(int argc, char* argv[])
 		main_screen(UID);
 		menu = getch();
 		// if(menu == '1') menu1();
-		// if(menu == '2') menu2();
+		if(menu == '2') menu2();
 		// if(menu == '3') menu3();
 		if(menu == '4') menu4();
 		if(menu == '5') menu5(UID_dirptr);
@@ -221,6 +230,156 @@ void main_screen()
 	move(8, 1);
 	printw("6. Exit");
 	refresh();
+}
+
+void menu2()
+{
+	WINDOW *win = newwin(20, 60, 1, 1);
+	
+	char c;
+	while(1)
+	{
+		menu2_screen(win);
+		c = wgetch(win);
+		if(c == 'q') break;
+		if(c == '1') menu2_1(win);
+		if(c == '2');
+		if(c == '3'); 
+		if(user_dead == 1) break;		
+	}
+
+	wclear(win);
+	wrefresh(win);
+	delwin(win);
+}
+
+void menu2_screen(WINDOW* win)
+{
+	box(win, '|', '+');
+	mvwprintw(win, 3, 2, "Display stats                       ");
+	mvwprintw(win, 5, 2, "1. Today's Studytime                ");
+	mvwprintw(win, 6, 2, "2. This week's Studytime            ");
+	mvwprintw(win, 7, 2, "3. This month's Studytime           ");
+	mvwprintw(win, 17, 2, "\'q\' to quit");
+	wrefresh(win);
+}
+
+void menu2_1(WINDOW* win)
+{	
+	time_t statdate = time(NULL);
+	time_t today = statdate;
+	struct tm *statdate_tm = localtime(&statdate);
+	
+	int today_year = statdate_tm->tm_year + 1900;
+	int today_month = statdate_tm->tm_mon + 1;
+	int today_day = statdate_tm->tm_mday;
+	
+	// 통계를 보여줄 년월일 변수
+	int stat_year = statdate_tm->tm_year + 1900;
+	int stat_month = statdate_tm->tm_mon + 1;
+	int stat_day = statdate_tm->tm_mday;
+	
+	keypad(win, TRUE); // 방향키 받을 거임
+	
+	char c;
+	while(1)
+	{
+		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
+		if(stat_year == today_year && stat_month == today_month && stat_day == today_day)	
+			mvwprintw(win, 5, 2, "Studytime during Today(%04d-%02d-%02d)", stat_year, stat_month, stat_day);
+		else
+			mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d           ", stat_year, stat_month, stat_day);
+		mvwprintw(win, 6, 2, "                         ");
+		mvwprintw(win, 7, 2, "                         ");
+		day_stats(win, stat_year, stat_month, stat_day);
+		wrefresh(win);
+		
+		c = wgetch(win);
+		if(c == 'q') break;
+		if(c == ARROW_DOWN || c == ARROW_LEFT)
+		{
+			statdate -= 86400;
+			statdate_tm = localtime(&statdate);
+			stat_year = statdate_tm->tm_year + 1900;
+			stat_month = statdate_tm->tm_mon + 1;
+			stat_day = statdate_tm->tm_mday;
+		}
+		if(statdate < today && (c == ARROW_UP || c == ARROW_RIGHT))
+		{
+			statdate += 86400;
+			statdate_tm = localtime(&statdate);
+			stat_year = statdate_tm->tm_year + 1900;
+			stat_month = statdate_tm->tm_mon + 1;
+			stat_day = statdate_tm->tm_mday;	
+		}
+	}
+	wclear(win);
+}
+
+void day_stats(WINDOW* win, int year, int month, int day)
+{
+	char statfile[256];
+
+	sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
+	mvwprintw(win, 6, 20, "%s", statfile);
+	
+	char UID_dir[256];
+	sprintf(UID_dir, "%s/%s", ".", UID);
+	mvwprintw(win, 6, 2, "%s", UID_dir);
+	if(chdir(UID_dir) == -1)
+	{
+		perror("chdir");
+		exit(21);
+	}
+
+	int fd1;
+	if((fd1 = creat(statfile, 0777)) == -1)
+	{
+		perror("open");
+		exit(22);
+	}
+	
+	srand(time(NULL));
+	timelog templog;
+	strcpy(templog.subject, "C Language");
+	templog.start_time = 0;
+	templog.finish_time = rand() % 30 + 6;
+	templog.studytime = (double)templog.finish_time - templog.start_time;
+	write(fd1, &templog, sizeof(timelog));
+	
+	timelog templog2;
+	strcpy(templog2.subject, "System Programming");
+	templog2.start_time = 0;
+	templog2.finish_time = rand() % 30 + 6;
+	templog2.studytime = (double)templog2.finish_time - templog2.start_time;
+	write(fd1, &templog2, sizeof(timelog));
+	close(fd1);
+
+	int fd2;
+	if((fd2 = open(statfile, O_RDONLY)) == -1)
+	{
+		perror("open");
+		exit(22);
+	}
+	
+	timelog templog3;
+	int j = 0;
+	mvwprintw(win, 9, 2, "--------------------------------------");
+	mvwprintw(win, 12, 2, "--------------------------------------");
+	while(read(fd2, &templog3, sizeof(timelog)) >= sizeof(timelog))
+	{
+		mvwprintw(win, 8+3*j, 2, "%s studytime: %.0f minutes         ", templog3.subject, templog3.studytime * 30);
+		for(int i=0; i<templog3.studytime; i++)
+			mvwprintw(win, 9+3*j, 2+i, "%%");
+		j++;
+	}
+	
+	if(chdir("..") == -1)
+	{
+		perror("chdir");
+		exit(21);
+	}
+	close(fd2);
 }
 
 void menu3() {
@@ -563,20 +722,11 @@ void menu4()
 	mvwprintw(win, 5, 2, "User ID: %s", s_user.user_ID);
 	mvwprintw(win, 6, 2, "Group ID: %s", s_user.group_ID);
 	
-	if((tm_ptr = localtime(&(s_user.signup))) == NULL) // time_t-> struct tm
-	{
-		perror("localtime");
-		return;
-	}
+	tm_ptr = localtime(&(s_user.signup)); // time_t-> struct tm
 	mvwprintw(win, 8, 2, "Sign up time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
-	if((tm_ptr = localtime(&(s_user.lastlogin))) == NULL) // time_t -> struct tm
-	{
-		perror("localtime");
-		return;
-	}
+	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
 	mvwprintw(win, 9, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
 	mvwprintw(win, 17, 2, "%s", "\'q\' to quit");
-	
 	wrefresh(win);
 	
 	char quit = '0';
@@ -593,7 +743,7 @@ void menu4()
 typedef struct
 {
 	short id; // device id
-	int x, y, z; // 마우스 커서 위치
+	int x, y, z; // 마우스 커서 위치q
 	mmask_t bstate; // 버튼의 상태 비트
 } MEVENT;
 */
@@ -631,8 +781,9 @@ void menu5_screen(WINDOW *win)
 void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 {
 	char yesno;
-	
-	mvwprintw(win, 9, 2, "Delete your account from StudytimeCheck (Y/N)"); wrefresh(win);
+	curs_set(1);
+	mvwprintw(win, 17, 2, "             ");
+	mvwprintw(win, 9, 2, "Delete your account from StudytimeCheck? (Y/N) "); wrefresh(win);
 	while(1)
 	{
 		yesno = wgetch(win); // 삭제하려면 y 입력
@@ -641,7 +792,6 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 		{
 			mvwprintw(win, 11, 2, "Enter your ID if you really want to leave.");
 			wrefresh(win);
-			mvwprintw(win, 17, 2, "             ");
 			mvwprintw(win, 13, 3, "          )");
 			mvwprintw(win, 13, 2, "(");
 			wrefresh(win);
@@ -704,7 +854,7 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 	}
 	wclear(win);
 	wrefresh(win);
-	noecho(); cbreak();
+	noecho(); cbreak(); curs_set(0);
 	return;
 }
 
