@@ -51,7 +51,7 @@ void menu5_deleteAccount(WINDOW* win, DIR*);
 
 int rmdir_r(DIR* path);
 
-int user_dead = 0;
+int user_dead = 0; // 유저가 탈퇴했는지 인지하는 변수
 int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보를 계속 가리킬 예정
 char UID[11]; // 전역 변수로 쓰는 게 편할 것 같음
 
@@ -609,7 +609,7 @@ void menu5(DIR* dir_ptr)
 		if(c == 'q') break;
 		if(c == '1');
 		if(c == '2');
-		if(c == '3') menu5_deleteAccount(win, dir_ptr);
+		if(c == '3') menu5_deleteAccount(win, dir_ptr); // 3 누르면 계정 삭제할지 말지 선택
 		if(user_dead == 1) break;		
 	}
 	wclear(win);
@@ -635,7 +635,7 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 	mvwprintw(win, 9, 2, "Delete your account from StudytimeCheck (Y/N)"); wrefresh(win);
 	while(1)
 	{
-		yesno = wgetch(win);
+		yesno = wgetch(win); // 삭제하려면 y 입력
 		yesno = toupper(yesno);
 		if(yesno == 'Y')
 		{
@@ -650,24 +650,25 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 			while(1)
 			{
 				input_c = wgetch(win);
-				if(isalpha(input_c) || isdigit(input_c))
+				if(isalpha(input_c) || isdigit(input_c)) // 알파벳, 숫자만 허용
 				{	
-					if(i < 10)
+					if(i < 10) // 10글자 이상 입력 blocking
 					{
 						mvwprintw(win, 13, 3 + i, "%c", input_c);
 						input[i++] = input_c;
 						input[i] = '\0';
 					}
 				}
-				if((input_c == '\b' || input_c == 127) && i > 0)
+				if((input_c == '\b' || input_c == 127) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
 				{	
 					mvwprintw(win, 13, 3 + --i, " ");
 					move(13, 1 + i);
 				}
-				if(input_c == '\n')
+				if(input_c == '\n') // 엔터 입력
 				{
-					if(strcmp(input, UID) == 0)
+					if(strcmp(input, UID) == 0) // 올바르게 입력
 					{
+						// 기존의 ID 정보를 DEAD_USER로 덮어쓰기
 						Studyuser left_user;
 						strcpy(left_user.user_ID, "DEAD_USER");
 						strcpy(left_user.group_ID, NO_GROUP);
@@ -675,6 +676,8 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 						left_user.lastlogin = 0;
 						lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
 						write(usersFd, &left_user, sizeof(Studyuser));
+						
+						// ID 디렉토리와 내부 파일들 전부 삭제
 						if(rmdir_r(uid_dirptr) == -1)
 						{
 							perror("rmdir");
@@ -683,7 +686,7 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 						mvwprintw(win, 13, 2, "Deactivated your account. See you Again...");
 						wrefresh(win);
 						sleep(2);
-						user_dead = 1;
+						user_dead = 1; // 유저가 탈퇴했음.
 					}
 					break;
 				}
@@ -705,7 +708,7 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 	return;
 }
 
-int rmdir_r(DIR* rm_dirptr) // 괜히 DIR*로 받았나
+int rmdir_r(DIR* rm_dirptr) // 유저 디렉토리 remove하는 함수, 괜히 DIR*로 받았나
 {
 	struct dirent *file = NULL;
 	char path[256];
