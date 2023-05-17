@@ -711,7 +711,7 @@ int rmdir_r(DIR* rm_dirptr) // 괜히 DIR*로 받았나
 	char path[256];
 	char filename[1024];
 	getcwd(path, sizeof(path));
-	printf("path: %s\n", path);
+	
 	while((file = readdir(rm_dirptr)) != NULL)
 	{
 		if(strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0)
