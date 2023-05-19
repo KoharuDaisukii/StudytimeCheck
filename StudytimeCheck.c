@@ -453,6 +453,7 @@ void menu3_join(WINDOW* win) {
 	}
 	else {
 		mvwprintw(win, 8, 2, "There is NO USER ID !!!!");
+		wrefresh(win);
 	}
 
 	char menu;
@@ -463,28 +464,75 @@ void menu3_join(WINDOW* win) {
 	wclear(win);
 	wrefresh(win);
 	return;
-
-
-
 }
 void menu3_leave(WINDOW* win) {
 
-	char c;
-	char userid[MAX];
-	printf("Insert your User ID : ");
-	scanf("%s", userid);
+	wclear(win);
+	box(win, '|', '_');
+	wrefresh(win);
 
-	//파일을 오픈하고
-	//파일에서 USERID 찾고
-	//그에 대한 구조체를 가져온다
+	echo();
+	int user_flag = 0;
+	char* userid = malloc(sizeof(char*) * MAX);
+	char yn;
+	char groupid[MAX];
 
-	printf("Do you want to leave? (y/n)");
-	c = getch();
-	if (c == 'y') {
-		//파일 오픈하고
-		//파일에서 해당 USERID 찾고
-		//그 GROUPID를 no_group으로지정하기
+	mvwprintw(win, 3, 2, "Insert your USER ID : ");
+	mvwgetstr(win, 3, 24, userid);
+
+	mvwprintw(win, 5, 2, "Do you want to leave this group ? (y/n) : ");
+	yn = mvwgetch(win, 5, 45);
+
+	if (yn == 'y') {
+		int ufd = usersFd;
+		int read_st = 0;
+		Studyuser j_user;
+
+		lseek(ufd, 0, SEEK_SET);
+		while (read(ufd, &j_user, sizeof(Studyuser))) {
+			if (strcmp(j_user.user_ID, userid) == 0) {
+				if (strcmp(j_user.group_ID, NO_GROUP) != 0) { // when user has a group
+					user_flag = 1; // userid is found
+					strcpy(groupid, j_user.group_ID); //copying group id before changing
+					strcpy(j_user.group_ID, NO_GROUP); // GROUP ID is copy to j_user
+					lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
+					write(ufd, &j_user, sizeof(Studyuser)); // replacing
+					wrefresh(win);
+				}
+				else {
+					user_flag = 2;
+				}
+			}
+		}
+		if (user_flag == 1) {
+			mvwprintw(win, 8, 2, "You just left in to <%s> !", groupid);
+			mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+			wrefresh(win);
+		}
+		else if (user_flag == 0) {
+			mvwprintw(win, 8, 2, "There is NO USER ID !!!!");
+			mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+			wrefresh(win);
+		}
+		else if (user_flag == 2) {
+			mvwprintw(win, 8, 2, "%s ! You already don't have a GROUP !!!", userid);
+			mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+			wrefresh(win);
+
+		}
 	}
+	else {
+		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+		wrefresh(win);
+	}
+
+	char menu;
+	while ((menu = getch()) != 'q');
+
+	free(userid);
+	wclear(win);
+	wrefresh(win);
+	return;
 
 }
 void menu3_rank(WINDOW* win) {
@@ -646,9 +694,10 @@ void menu4()
 	WINDOW* win = newwin(20, 60, 1, 1);
 	box(win, '|', '+');
 
+	int ufd = usersFd;
 	Studyuser s_user; // 내 정보 읽어오기
-	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
-	read(usersFd, &s_user, sizeof(Studyuser));
+	lseek(ufd, -sizeof(Studyuser), SEEK_CUR);
+	read(ufd, &s_user, sizeof(Studyuser));
 
 	struct tm* tm_ptr;
 
