@@ -430,8 +430,6 @@ void menu3_join(WINDOW* win) {
 	mvwprintw(win, 6, 2, "Enter the GROUP ID that you want to join : ");
 	mvwgetstr(win, 6, 45, groupid);
 
-	mvwprintw(win, 9, 2, "USER ID : %s GROUP ID : %s", userid, groupid);
-
 	int ufd = usersFd;
 	int read_st = 0;
 	Studyuser j_user;
@@ -537,14 +535,54 @@ void menu3_leave(WINDOW* win) {
 }
 void menu3_rank(WINDOW* win) {
 
-	char userid[MAX];
-	printf("Insert your User ID : ");
-	scanf("%s", userid);
+	wclear(win);
+	box(win, '|', '_');
+	wrefresh(win);
 
-	/*파일을 열고 해당 UID를 찾는다
-	  해당 UID GID를 가지는 모든 사용자의 정보를 불러온다
-	  시간을 계산하고 시간에 따라 sorting하고
-	  순서대로 정보를 보여줌 */
+	echo();
+	int user_flag = 0;
+	char* groupid = malloc(sizeof(char*) * MAX);
+
+	mvwprintw(win, 3, 2, "Insert your GROUP ID : ");
+	mvwgetstr(win, 3, 24, groupid);
+
+	int ufd = usersFd;
+	Studyuser j_user;
+	Studyuser rank_user[50];
+	int index = 0;
+	lseek(ufd, 0, SEEK_SET);
+	while (read(ufd, &j_user, sizeof(Studyuser))) {
+		if (strcmp(j_user.group_ID, groupid) == 0) {// searching other users that match user's group
+			rank_user[index] = j_user; // 공부시간을 어떻게 가지고 올지 ??
+			index++;
+		}
+	}
+	if (user_flag == 1) {
+		mvwprintw(win, 8, 2, "You just left in to <%s> !", groupid);
+		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+		wrefresh(win);
+	}
+	else if (user_flag == 0) {
+		mvwprintw(win, 8, 2, "There is NO USER ID !!!!");
+		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+		wrefresh(win);
+	}
+	else if (user_flag == 2) {
+		mvwprintw(win, 8, 2, "%s ! You already don't have a GROUP !!!", userid);
+		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+		wrefresh(win);
+
+	}
+
+
+	char menu;
+	while ((menu = getch()) != 'q');
+
+	free(userid);
+	wclear(win);
+	wrefresh(win);
+	return;
+
 }
 void menu3_screen(WINDOW* win) {
 	int x = 3;
