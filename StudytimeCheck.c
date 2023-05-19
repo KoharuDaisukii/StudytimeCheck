@@ -392,7 +392,7 @@ void menu3() {
 		menu3_screen();
 		menu = getch();
 		if(menu=='1') menu3_join();
-		//if(menu=='2') menu3_leave();
+		if(menu=='2') menu3_leave();
 		//if(menu=='3') menu3_rank();
 		if (menu == '4') {
 			break;
