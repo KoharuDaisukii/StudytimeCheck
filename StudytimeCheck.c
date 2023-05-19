@@ -14,7 +14,7 @@
 #define USERS_INFO_FILE "users.txt"
 #define NO_GROUP "no_group"
 
-#define MAX 50
+#define MAX 11
 #define ARROW_DOWN 2
 #define ARROW_UP 3
 #define ARROW_LEFT 4
@@ -396,7 +396,6 @@ void menu3() {
 	//wclear(win);
 	// make new window
 	WINDOW* win = newwin(50, 100, 1, 1);
-	box(win, '|', '_');
 
 	char menu;
 	while (1) {
@@ -426,41 +425,41 @@ void menu3_join(WINDOW* win) {
 	char* userid = malloc(sizeof(char*) * MAX);
 
 	mvwprintw(win, 3, 2, "Insert your USER ID : ");
-	mvwgetstr(win, 4, 2, userid);
+	mvwgetstr(win, 3, 24, userid);
 	//If the user has a group id, should we tell users to leave the group and rejoin to another group?
 	mvwprintw(win, 6, 2, "Enter the GROUP ID that you want to join : ");
-	mvwgetstr(win, 7, 2, groupid);
+	mvwgetstr(win, 6, 45, groupid);
+
+	mvwprintw(win, 9, 2, "USER ID : %s GROUP ID : %s", userid, groupid);
 
 	int ufd = usersFd;
 	int read_st = 0;
 	Studyuser j_user;
+
 	lseek(ufd, 0, SEEK_SET);
 	while (read(ufd, &j_user, sizeof(Studyuser))) {
 		if (strcmp(j_user.user_ID, userid) == 0) {
-			mvwprintw(win, 8, 2, "found");
 			user_flag = 1; // userid is found
 			strcpy(j_user.group_ID, groupid); // GROUP ID is copy to j_user
 			lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
 			write(ufd, &j_user, sizeof(Studyuser)); // replacing
-			break;
+			wrefresh(win);
 		}
 	}
-
 	if (user_flag == 1) {
-		noecho();
 		mvwprintw(win, 8, 2, "You join in to <%s> !", groupid);
 		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+		wrefresh(win);
 	}
 	else {
 		mvwprintw(win, 8, 2, "There is NO USER ID !!!!");
 	}
 
+	char menu;
+	while ((menu = getch()) != 'q');
+
 	free(groupid);
 	free(userid);
-
-	char menu;
-	while ((menu = getch()) == 'q');
-
 	wclear(win);
 	wrefresh(win);
 	return;
