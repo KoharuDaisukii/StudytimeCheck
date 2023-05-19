@@ -40,6 +40,7 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 } timelog;
 
 DIR* login(); // login 성공: UID directory 포인터 return
+<<<<<<< HEAD
 
 void main_screen();
 void menu2();
@@ -51,6 +52,19 @@ void menu3_join(WINDOW* win);
 void menu3_leave(WINDOW* win);
 void menu3_rank(WINDOW* win);
 
+=======
+
+void main_screen();
+void menu2();
+void menu2_screen(WINDOW* win);
+void menu2_1(WINDOW* win); // 이름을 어칼까
+void day_stats(WINDOW* win, int year, int month, int day);
+void menu3_screen();
+/*void menu3_join();
+void menu3_leave();
+void menu3_rank();
+*/
+>>>>>>> 02261030ca629a2fffc95642ce62639bfef7868c
 void menu3();
 void menu4();
 void menu5(DIR*);
