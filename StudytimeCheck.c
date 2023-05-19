@@ -546,7 +546,7 @@ void menu3_rank(WINDOW* win) {
 	mvwprintw(win, 3, 2, "Insert your GROUP ID : ");
 	mvwgetstr(win, 3, 24, groupid);
 
-	int ufd = usersFd;
+	/*int ufd = usersFd;
 	Studyuser j_user;
 	Studyuser rank_user[50];
 	int index = 0;
@@ -572,7 +572,7 @@ void menu3_rank(WINDOW* win) {
 		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
 		wrefresh(win);
 
-	}
+	}*/
 
 
 	char menu;
