@@ -223,19 +223,200 @@ DIR* login()
 
 void main_screen()
 {
-	move(1, 1);
+	int x = 3;
+	int  y = 7;
+
+	//S
+	move(y, x);
+	printw("*");
+	move(y, x + 1);
+	printw("*");
+	move(y, x + 2);
+	printw("*");
+	move(y, x + 3);
+	printw("*");
+	move(y, x + 4);
+	printw("*");
+	move(y + 1, x);
+	printw("*");
+	move(y + 2, x);
+	printw("*");
+	move(y + 2, x + 1);
+	printw("*");
+	move(y + 2, x + 2);
+	printw("*");
+	move(y + 2, x + 3);
+	printw("*");
+	move(y + 2, x + 4);
+	printw("*");
+	move(y + 3, x + 4);
+	printw("*");
+	move(y + 4, x + 4);
+	printw("*");
+	move(y + 4, x + 3);
+	printw("*");
+	move(y + 4, x + 2);
+	printw("*");
+	move(y + 4, x + 1);
+	printw("*");
+	move(y + 4, x);
+	printw("*");
+
+	//T
+	move(y, x + 7);
+	printw("*");
+	move(y, x + 8);
+	printw("*");
+	move(y, x + 9);
+	printw("*");
+	move(y, x + 10);
+	printw("*");
+	move(y, x + 11);
+	printw("*");
+	move(y + 1, x + 9);
+	printw("*");
+	move(y + 2, x + 9);
+	printw("*");
+	move(y + 3, x + 9);
+	printw("*");
+	move(y + 4, x + 9);
+	printw("*");
+
+	//U
+	move(y, x + 14);
+	printw("*");
+	move(y + 1, x + 14);
+	printw("*");
+	move(y + 2, x + 14);
+	printw("*");
+	move(y + 3, x + 14);
+	printw("*");
+	move(y + 4, x + 14);
+	printw("*");
+	move(y, x + 18);
+	printw("*");
+	move(y + 1, x + 18);
+	printw("*");
+	move(y + 2, x + 18);
+	printw("*");
+	move(y + 3, x + 18);
+	printw("*");
+	move(y + 4, x + 18);
+	printw("*");
+	move(y + 4, x + 15);
+	printw("*");
+	move(y + 4, x + 16);
+	printw("*");
+	move(y + 4, x + 17);
+	printw("*");
+
+	//D
+	move(y, x + 21);
+	printw("*");
+	move(y + 1, x + 21);
+	printw("*");
+	move(y + 2, x + 21);
+	printw("*");
+	move(y + 3, x + 21);
+	printw("*");
+	move(y + 4, x + 21);
+	printw("*");
+	move(y, x + 22);
+	printw("*");
+	move(y, x + 23);
+	printw("*");
+	move(y, x + 24);
+	printw("*");
+	move(y + 4, x + 22);
+	printw("*");
+	move(y + 4, x + 23);
+	printw("*");
+	move(y + 4, x + 24);
+	printw("*");
+	move(y + 1, x + 25);
+	printw("*");
+	move(y + 2, x + 25);
+	printw("*");
+	move(y + 3, x + 25);
+	printw("*");
+
+	//Y
+	move(y, x + 27);
+	printw("*");
+	move(y + 1, x + 28);
+	printw("*");
+	move(y + 2, x + 29);
+	printw("*");
+	move(y + 2, x + 30);
+	printw("*");
+	move(y + 2, x + 31);
+	printw("*");
+	move(y + 1, x + 32);
+	printw("*");
+	move(y, x + 33);
+	printw("*");
+	move(y + 3, x + 30);
+	printw("*");
+	move(y + 4, x + 30);
+	printw("*");
+
+	//2번째 줄 
+	//T
+	move(y + 6, x + 4);
+	printw("*");
+	move(y + 6, x + 5);
+	printw("*");
+	move(y + 6, x + 6);
+	printw("*");
+	move(y + 6, x + 7);
+	printw("*");
+	move(y + 6, x + 8);
+	printw("*");
+	move(y + 7, x + 6);
+	printw("*");
+	move(y + 8, x + 6);
+	printw("*");
+	move(y + 9, x + 6);
+	printw("*");
+	move(y + 10, x + 6);
+	printw("*");
+
+	//I
+	move(y + 6, x + 12);
+	printw("*");
+	move(y + 6, x + 11);
+	printw("*");
+	move(y + 6, x + 13);
+	printw("*");
+	move(y + 7, x + 12);
+	printw("*");
+	move(y + 8, x + 12);
+	printw("*");
+	move(y + 9, x + 12);
+	printw("*");
+	move(y + 10, x + 12);
+	printw("*");
+	move(y + 10, x + 11);
+	printw("*");
+	move(y + 10, x + 13);
+	printw("*");
+
+	//M
+
+
+	move(x, y + 40);
 	printw("Welcome! %s!", UID);
-	move(3, 1);
+	move(x, y + 41);
 	printw("1. Studytime Measuring");
-	move(4, 1);
+	move(x, y + 42);
 	printw("2. Display Stats");
-	move(5, 1);
+	move(x, y + 43);
 	printw("3. Group");
-	move(6, 1);
+	move(x, y + 44);
 	printw("4. My profile");
-	move(7, 1);
+	move(x, y + 45);
 	printw("5. Settings");
-	move(8, 1);
+	move(x, y + 46);
 	printw("6. Exit");
 	refresh();
 }
@@ -546,7 +727,7 @@ void menu3_rank(WINDOW* win) {
 	mvwprintw(win, 3, 2, "Insert your GROUP ID : ");
 	mvwgetstr(win, 3, 24, groupid);
 
-	/*int ufd = usersFd;
+	int ufd = usersFd;
 	Studyuser j_user;
 	Studyuser rank_user[50];
 	int index = 0;
@@ -568,17 +749,17 @@ void menu3_rank(WINDOW* win) {
 		wrefresh(win);
 	}
 	else if (user_flag == 2) {
-		mvwprintw(win, 8, 2, "%s ! You already don't have a GROUP !!!", userid);
+		mvwprintw(win, 8, 2, "%s ! You already don't have a GROUP !!!", groupid);
 		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
 		wrefresh(win);
 
-	}*/
+	}
 
 
 	char menu;
 	while ((menu = getch()) != 'q');
 
-	free(userid);
+	free(groupid);
 	wclear(win);
 	wrefresh(win);
 	return;
