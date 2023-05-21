@@ -14,6 +14,8 @@
 #define USERS_INFO_FILE "users.txt"
 #define NO_GROUP "no_group"
 
+#define JANUARY 0
+#define DECEMBER 11
 #define SECONDS_PER_DAY 86400
 #define MAX 11
 #define ARROW_DOWN 2
@@ -49,6 +51,8 @@ void menu2_1(WINDOW* win); // 이름을 어칼까
 void day_stats(WINDOW* win, int year, int month, int day);
 void menu2_2(WINDOW* win);
 void week_stats(WINDOW* win, time_t today);
+void menu2_3(WINDOW* win);
+void month_stats(WINDOW* win, struct tm statmonth_tm);
 
 // MENU 3 관련 함수 
 void menu3();
@@ -162,7 +166,14 @@ DIR* login()
 			user_exist = 1; // 있네
 			break; // file pointer는 찾은 유저의 기록 바로 다음을 가리킴
 		}
-
+	if (chdir(NO_GROUP) == -1) // 유저 정보가 담긴 디렉토리로 이동
+	{
+		if (mkdir(NO_GROUP, 0755) == -1 || chdir(NO_GROUP) == -1) // 없으면 만듦
+		{
+			perror(NO_GROUP);
+			exit(4);
+		}
+	}
 	// 한글 ID 입력하면 컷하는 기능도 필요할 듯
 	if ((dir_ptr = opendir(UID)) == NULL || user_exist == 0) // UID 폴더 존재하는 지 확인, 그룹 생각 안 하고 일단 함
 	{
@@ -430,7 +441,7 @@ void menu2()
 		if (c == 'q') break;
 		if (c == '1') menu2_1(win);
 		if (c == '2') menu2_2(win);
-		if (c == '3');
+		if (c == '3') menu2_3(win);
 		if (user_dead == 1) break;
 	}
 
@@ -618,7 +629,7 @@ void week_stats(WINDOW* win, time_t today)
 {
 	char UID_dir[256];
 	sprintf(UID_dir, "%s/%s", ".", UID);
-	mvwprintw(win, 6, 2, "%s", UID_dir);
+	// mvwprintw(win, 6, 2, "%s", UID_dir);
 	if (chdir(UID_dir) == -1)
 	{
 		perror("chdir");
@@ -627,7 +638,7 @@ void week_stats(WINDOW* win, time_t today)
 	
 	timelog weeklog[7];
 	int year, month, day;
-
+	double total = 0.0;
 	for(int week_i=6; week_i>=0; week_i--)
 	{
 		char statfile[15];
@@ -641,20 +652,201 @@ void week_stats(WINDOW* win, time_t today)
 		int fd;
 		if ((fd = open(statfile, O_RDONLY)) == -1)
 		{	
-			mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: %4.0f minutes", year, month, day, weeklog[week_i].studytime * 30);
+			mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: ------------------------------", year, month, day, weeklog[week_i].studytime * 30);
+			mvwprintw(win, 8+week_i, 45, "%4.0f minutes", weeklog[week_i].studytime * 30);
 			today -= SECONDS_PER_DAY;
 			continue;
 		}
 	
 		timelog templog;
 		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
+		{
 			weeklog[week_i].studytime += templog.studytime;
+			total += weeklog[week_i].studytime;
+		}
 		close(fd);
 		
-		mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: %4.0f minutes", year, month, day, weeklog[week_i].studytime * 30);
+		mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: ------------------------------", year, month, day, weeklog[week_i].studytime * 30);
+		for (int i = 0; i < weeklog[week_i].studytime / 2.5; i++)
+			mvwprintw(win, 8+week_i, 14+i, "%%");
+		mvwprintw(win, 8+week_i, 45, "%4.0f minutes", weeklog[week_i].studytime * 30);
 		today -= SECONDS_PER_DAY;
 	}
+	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes", total * 30);
+	
+	if (chdir("..") == -1)
+	{
+		perror("chdir");
+		exit(21);
+	}
+}
 
+void menu2_3(WINDOW* win)
+{
+	time_t statmonth = time(NULL);
+	time_t today = statmonth;
+	// localtime은 static data구나
+	struct tm statmonth_tm;
+	// int today_year = endweek_tm->tm_year + 1900;
+	// int today_month = endweek_tm->tm_mon + 1;
+	// int today_day = endweek_tm->tm_mday;
+
+	keypad(win, TRUE); // 방향키 받을 거임
+
+	char c;
+	while (1)
+	{
+		localtime_r(&statmonth, &statmonth_tm);
+		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
+		mvwprintw(win, 5, 20, "                       ");
+		switch(statmonth_tm.tm_mon + 1)
+		{
+			case 1:
+				mvwprintw(win, 5, 2, "Studytime of January, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 2:
+				mvwprintw(win, 5, 2, "Studytime of February, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 3:
+				mvwprintw(win, 5, 2, "Studytime of March, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 4:
+				mvwprintw(win, 5, 2, "Studytime of April, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 5:
+				mvwprintw(win, 5, 2, "Studytime of May, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 6:
+				mvwprintw(win, 5, 2, "Studytime of June, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 7:
+				mvwprintw(win, 5, 2, "Studytime of July, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 8:
+				mvwprintw(win, 5, 2, "Studytime of August, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 9:
+				mvwprintw(win, 5, 2, "Studytime of September, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 10:
+				mvwprintw(win, 5, 2, "Studytime of October, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 11:
+				mvwprintw(win, 5, 2, "Studytime of November, %d", statmonth_tm.tm_year + 1900);
+				break;
+			case 12:
+				mvwprintw(win, 5, 2, "Studytime of December, %d", statmonth_tm.tm_year + 1900);
+				break;
+		}
+		
+		mvwprintw(win, 6, 2, "                         ");
+		mvwprintw(win, 7, 2, "                         ");
+		month_stats(win, statmonth_tm);
+		wrefresh(win);
+
+		c = wgetch(win);
+		if (c == 'q') break;
+		if (c == ARROW_DOWN || c == ARROW_LEFT)
+		{
+			if(statmonth_tm.tm_mon > JANUARY) // 2월~12월
+				statmonth_tm.tm_mon--;
+			else // 1월
+			{
+				statmonth_tm.tm_year--;
+				statmonth_tm.tm_mon = DECEMBER; // 12월
+			}
+		}
+		if (statmonth < today && (c == ARROW_UP || c == ARROW_RIGHT))
+		{
+			if(statmonth_tm.tm_mon < DECEMBER) // 1월~11월
+				statmonth_tm.tm_mon++;
+			else // 12월
+			{
+				statmonth_tm.tm_year++;
+				statmonth_tm.tm_mon = JANUARY;
+			}
+		}
+		statmonth = mktime(&statmonth_tm);
+	}
+	keypad(win, FALSE);
+	wclear(win);
+}
+
+void month_stats(WINDOW* win, struct tm statmonth_tm)
+{
+	char UID_dir[256];
+	sprintf(UID_dir, "%s/%s", ".", UID);
+	mvwprintw(win, 6, 2, "%s", UID_dir);
+
+	if (chdir(UID_dir) == -1)
+	{
+		perror("chdir");
+		exit(21);
+	}
+	
+	timelog subjectlog[100]; // 과목별 로그
+	int year, month, day;
+	year = statmonth_tm.tm_year + 1900;
+	month = statmonth_tm.tm_mon + 1;
+	double total = 0.0;
+	int day_i, subject_count = 0;
+	
+	switch(month)
+	{
+		case 1:
+		case 3:
+		case 5:
+		case 7:
+		case 8:
+		case 10:
+		case 12:
+			day_i = 31;
+			break;
+		case 2:
+			day_i = 29;
+			break;
+		default:
+			day_i = 30;
+	}
+	
+	for(; day_i>=0; day_i--)
+	{
+		char statfile[15];
+		day = day_i;
+		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
+		
+		memset(subjectlog[subject_count].subject, 0, sizeof(char)*30);
+		subjectlog[subject_count].studytime = 0.0;
+		int fd;
+		if ((fd = open(statfile, O_RDONLY)) == -1)
+			continue;
+	
+		timelog templog;
+		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
+		{
+			total += templog.studytime;
+			for(int subject_i=0; subject_i<subject_count; subject_i++)
+			{
+				if(strcmp(subjectlog[subject_i].subject, templog.subject) == 0)
+				{	
+					subjectlog[subject_i].studytime += templog.studytime;
+					continue;
+				}
+			}
+			strcpy(subjectlog[subject_count].subject, templog.subject);
+			subjectlog[subject_count++].studytime += templog.studytime;
+		}
+		close(fd);
+	}
+	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes       %d", total * 30, subject_count);
+	for(int subject_i = 0; subject_i<subject_count; subject_i++)
+	{
+		mvwprintw(win, 8+subject_i*3, 2, "%d. %20s", subject_i+1, subjectlog[subject_i].subject);
+		mvwprintw(win, 9+subject_i*3, 2, "------------------------------ %7.0f minutes", subjectlog[subject_i].subject, subjectlog[subject_i].studytime * 30);
+	}
+	//	for (int i = 0; i < weeklog[week_i].studytime / 2.5; i++)
+	//		mvwprintw(win, 8+week_i, 14+i, "%%");
+	//	mvwprintw(win, 8+week_i, 45, "%4.0f minutes", weeklog[week_i].studytime * 30);
 	if (chdir("..") == -1)
 	{
 		perror("chdir");
