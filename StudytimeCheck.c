@@ -173,7 +173,7 @@ DIR* login()
 		perror(s_user.group_ID);
 		exit(4);
 	}
-	else
+	if(user_exist == 0)
 	{
 		if(chdir(NO_GROUP) == -1)
 		{
