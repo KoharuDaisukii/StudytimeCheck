@@ -53,6 +53,13 @@ int main(){
 	strcat(g_dir, "./users/");
 	strcat(g_dir, groupid);
 
+	typedef struct usertime {
+		char user_name[10];
+		double user_time;
+	}usertime;
+	
+	usertime rank[10];
+
 	int i = 0;
 	char user_name[10][10];
 	DIR* groupdir = opendir(g_dir); // ./user/group_name 디렉토리 열기
@@ -61,7 +68,7 @@ int main(){
 		while ((ent = readdir(groupdir)) != NULL) {
 			if (ent->d_type == DT_DIR && strcmp(ent->d_name,".") !=0 && strcmp(ent->d_name,"..") != 0) {
 				users_flag = 1;
-				strcpy(user_name[i], ent->d_name);
+				strcpy(rank[i].user_name, ent->d_name);
 				i++;
 			}
 		}
@@ -72,10 +79,7 @@ int main(){
 		exit(1);
 	}
 	printf("%d\n", i);
-	// user_name 확인하기
-	for (int index = 0; index < i; index++) {
-		printf("user_name[%d] : %s\n", index, user_name[index]);
-	}
+	
 	// 오늘 날짜 구하기
 	time_t t = time(NULL); 
 	struct tm* now = localtime(&t); 
@@ -89,10 +93,11 @@ int main(){
 	struct stat buf;
 	char u_dir[40] = { 0 }; //users/group_name/users_name
 	int today_flag = 0;
+	
 	for (int s = 0; s < i; s++) {
 		strcat(u_dir, g_dir);
 		strcat(u_dir, "/");
-		strcat(u_dir, user_name[s]);
+		strcat(u_dir, rank[i].user_name);
 		printf("user dir : %s\n", u_dir);
 
 		DIR* userDir = opendir(u_dir);
@@ -108,13 +113,14 @@ int main(){
 				}
 			}
 			//파일열기
-			FILE* today_file = fopen(dateStr, "r");
-			if (today_file != NULL) {
-				// 파일 구조체 단위로 읽기
-				// 선언한 구조체 배열에 대입
-				// 구조체 시간 계산
-				// 다른 구조체를 선언해서 구조체에 저장
+			int fd; // file descriptor 선언
+			timelog todaytime; //timelog 구조체 todaytime 선언;
 
+			if ((fd = open(dateStr, O_RDONLY)) != -1) {
+				//파일 구조체 단위로 읽기
+				while (read(fd, &todaytime, sizeof(timelog)) {
+					rank[i].user_time += todaytime.studytime;
+				}
 				fclose(today_file); 
 			}
 			else {
@@ -125,6 +131,9 @@ int main(){
 		}
 		closedir(userDir);
 	}
+	// rank 구조체 sorting 하기
+	// sorting 한 결과 보여주기
+
 	
 
 	free(groupid);
