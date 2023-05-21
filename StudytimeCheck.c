@@ -14,6 +14,7 @@
 #define USERS_INFO_FILE "users.txt"
 #define NO_GROUP "no_group"
 
+#define SECONDS_PER_DAY 86400
 #define MAX 11
 #define ARROW_DOWN 2
 #define ARROW_UP 3
@@ -46,6 +47,8 @@ void menu2();
 void menu2_screen(WINDOW* win);
 void menu2_1(WINDOW* win); // 이름을 어칼까
 void day_stats(WINDOW* win, int year, int month, int day);
+void menu2_2(WINDOW* win);
+void week_stats(WINDOW* win, time_t today);
 
 // MENU 3 관련 함수 
 void menu3();
@@ -53,12 +56,6 @@ void menu3_screen(WINDOW* win);
 void menu3_join(WINDOW* win);
 void menu3_leave(WINDOW* win);
 void menu3_rank(WINDOW* win);
-
-void main_screen();
-void menu2();
-void menu2_screen(WINDOW* win);
-void menu2_1(WINDOW* win); // 이름을 어칼까
-void day_stats(WINDOW* win, int year, int month, int day);
 
 void menu4();
 void menu5(DIR*);
@@ -427,12 +424,12 @@ void menu2()
 
 	char c;
 	while (1)
-	{
+	{	
 		menu2_screen(win);
 		c = wgetch(win);
 		if (c == 'q') break;
 		if (c == '1') menu2_1(win);
-		if (c == '2');
+		if (c == '2') menu2_2(win);
 		if (c == '3');
 		if (user_dead == 1) break;
 	}
@@ -444,6 +441,7 @@ void menu2()
 
 void menu2_screen(WINDOW* win)
 {
+	wclear(win);
 	box(win, '|', '+');
 	mvwprintw(win, 3, 2, "Display stats                       ");
 	mvwprintw(win, 5, 2, "1. Today's Studytime                ");
@@ -487,7 +485,7 @@ void menu2_1(WINDOW* win)
 		if (c == 'q') break;
 		if (c == ARROW_DOWN || c == ARROW_LEFT)
 		{
-			statdate -= 86400;
+			statdate -= SECONDS_PER_DAY;
 			statdate_tm = localtime(&statdate);
 			stat_year = statdate_tm->tm_year + 1900;
 			stat_month = statdate_tm->tm_mon + 1;
@@ -495,13 +493,14 @@ void menu2_1(WINDOW* win)
 		}
 		if (statdate < today && (c == ARROW_UP || c == ARROW_RIGHT))
 		{
-			statdate += 86400;
+			statdate += SECONDS_PER_DAY;
 			statdate_tm = localtime(&statdate);
 			stat_year = statdate_tm->tm_year + 1900;
 			stat_month = statdate_tm->tm_mon + 1;
 			stat_day = statdate_tm->tm_mday;
 		}
 	}
+	keypad(win, FALSE);
 	wclear(win);
 }
 
@@ -569,6 +568,98 @@ void day_stats(WINDOW* win, int year, int month, int day)
 		exit(21);
 	}
 	close(fd2);
+}
+
+void menu2_2(WINDOW* win)
+{
+	time_t endweek = time(NULL);
+	time_t today = endweek;
+	time_t startweek = endweek - (SECONDS_PER_DAY * 6);
+	// localtime은 static data구나
+	struct tm endweek_tm; localtime_r(&endweek, &endweek_tm);
+	struct tm startweek_tm; localtime_r(&startweek, &startweek_tm);
+	
+	// int today_year = endweek_tm->tm_year + 1900;
+	// int today_month = endweek_tm->tm_mon + 1;
+	// int today_day = endweek_tm->tm_mday;
+
+	keypad(win, TRUE); // 방향키 받을 거임
+
+	char c;
+	while (1)
+	{
+		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
+		mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d ~ %04d-%02d-%02d", startweek_tm.tm_year + 1900, startweek_tm.tm_mon + 1, startweek_tm.tm_mday, endweek_tm.tm_year + 1900, endweek_tm.tm_mon + 1, endweek_tm.tm_mday);
+		mvwprintw(win, 6, 2, "                         ");
+		mvwprintw(win, 7, 2, "                         ");
+		week_stats(win, endweek);
+		wrefresh(win);
+
+		c = wgetch(win);
+		if (c == 'q') break;
+		if (c == ARROW_DOWN || c == ARROW_LEFT)
+		{
+			endweek -= SECONDS_PER_DAY;
+			startweek -= SECONDS_PER_DAY;
+		}
+		if (endweek < today && (c == ARROW_UP || c == ARROW_RIGHT))
+		{
+			endweek += SECONDS_PER_DAY;
+			startweek += SECONDS_PER_DAY;
+		}
+		localtime_r(&endweek, &endweek_tm);
+		localtime_r(&startweek, &startweek_tm);
+	}
+	keypad(win, FALSE);
+	wclear(win);
+}
+
+void week_stats(WINDOW* win, time_t today)
+{
+	char UID_dir[256];
+	sprintf(UID_dir, "%s/%s", ".", UID);
+	mvwprintw(win, 6, 2, "%s", UID_dir);
+	if (chdir(UID_dir) == -1)
+	{
+		perror("chdir");
+		exit(21);
+	}
+	
+	timelog weeklog[7];
+	int year, month, day;
+
+	for(int week_i=6; week_i>=0; week_i--)
+	{
+		char statfile[15];
+		struct tm today_tm; localtime_r(&today, &today_tm);
+		year = today_tm.tm_year + 1900;
+		month = today_tm.tm_mon + 1;
+		day = today_tm.tm_mday;
+		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
+		
+		weeklog[week_i].studytime = 0.0;
+		int fd;
+		if ((fd = open(statfile, O_RDONLY)) == -1)
+		{	
+			mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: %4.0f minutes", year, month, day, weeklog[week_i].studytime * 30);
+			today -= SECONDS_PER_DAY;
+			continue;
+		}
+	
+		timelog templog;
+		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
+			weeklog[week_i].studytime += templog.studytime;
+		close(fd);
+		
+		mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: %4.0f minutes", year, month, day, weeklog[week_i].studytime * 30);
+		today -= SECONDS_PER_DAY;
+	}
+
+	if (chdir("..") == -1)
+	{
+		perror("chdir");
+		exit(21);
+	}
 }
 
 void menu3() {
