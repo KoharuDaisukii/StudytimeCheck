@@ -161,17 +161,27 @@ DIR* login()
 
 	Studyuser s_user;
 	while (read(usersFd, &s_user, sizeof(Studyuser)) >= sizeof(Studyuser))
+	{
 		if (strcmp(s_user.user_ID, UID) == 0) // 해당하는 UID의 유저가 있는지 탐색
 		{
 			user_exist = 1; // 있네
 			break; // file pointer는 찾은 유저의 기록 바로 다음을 가리킴
 		}
-	if (chdir(NO_GROUP) == -1) // 유저 정보가 담긴 디렉토리로 이동
+	}
+	if (user_exist && chdir(s_user.group_ID) == -1) // 유저 정보가 담긴 디렉토리로 이동
 	{
-		if (mkdir(NO_GROUP, 0755) == -1 || chdir(NO_GROUP) == -1) // 없으면 만듦
+		perror(s_user.group_ID);
+		exit(4);
+	}
+	else
+	{
+		if(chdir(NO_GROUP) == -1)
 		{
-			perror(NO_GROUP);
-			exit(4);
+			if (mkdir(NO_GROUP, 0755) == -1 || chdir(NO_GROUP) == -1) // 없으면 만듦
+			{
+				perror(NO_GROUP);
+				exit(4);
+			}
 		}
 	}
 	// 한글 ID 입력하면 컷하는 기능도 필요할 듯
