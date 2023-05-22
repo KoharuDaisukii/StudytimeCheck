@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <string.h> // strlen
 #include <ctype.h> // toupper, isalpha, isdigit
 #include <sys/stat.h> // mkdir
@@ -31,7 +31,7 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 
 typedef struct usertime {
 	char user_name[10];
-	double user_time;
+	double study_time;
 }usertime;
 
 int main(){
@@ -83,6 +83,7 @@ int main(){
 		}
 		closedir(groupdir); 
 	}
+
 	else {
 		perror("Error opening group directory.\n");
 		exit(1);
@@ -106,57 +107,74 @@ int main(){
 	for (int s = 0; s < i; s++) {
 		strcat(u_dir, g_dir);
 		strcat(u_dir, "/");
-		strcat(u_dir, rank[i].user_name);
+		strcat(u_dir, rank[s].user_name);
 		printf("user dir : %s\n", u_dir);
 
 		DIR* userDir = opendir(u_dir);
 		if (u_dir != NULL) {
 			struct dirent* u_entry;
 			while ((u_entry = readdir(userDir)) != NULL) {
-				if (u_entry->d_type == DT_REG && strcmp(u_entry->d_name, dateStr) == 0) { // 오늘 파일 존재 확인
-					today_file = 1;
+				if (strcmp(u_entry->d_name, dateStr) == 0) {// finding today record
+					printf("Today record found\n");
+					today_flag = 1;
+					break;
 				}
-				else {
-					printf("There is no records about today !!");
-					exit(1);
-				}
+				
+			}
+			if(today_flag == 0){ // today file not found
+				printf("Today record not found\n");
 			}
 			//파일열기
 			int fd; // file descriptor 선언
 			timelog todaytime; //timelog 구조체 todaytime 선언;
+			
+			char f_dir[30]; // to save file path
+			strcat(f_dir, u_dir);
+			strcat(f_dir, "/");
+			strcat(f_dir, dateStr); // making file path 
 
-			if ((fd = open(dateStr, O_RDONLY)) != -1) {
+			printf("file path : %s\n", f_dir);
+			char* f = malloc(sizeof(char*));
+			strcpy(f, f_dir);
+
+			printf("f : %s\n", f);
+
+			if ((fd = open("./users/no_group/user1/20230522.txt", O_RDONLY)) != -1) {
+				printf("calculating time...\n");
 				//파일 구조체 단위로 읽기
-				while (read(fd, &todaytime, sizeof(timelog)) {
-					rank[s].user_time += todaytime.studytime;
+				while (read(fd, &todaytime, sizeof(timelog))) {
+					printf("time : %lf\n", todaytime.studytime);
+					rank[s].study_time += todaytime.studytime;
 				}
-				fclose(today_file);
+				close(fd);
 			}
 			else {
 				printf("Error opening %s file.\n", dateStr);
-				closedir(dir);
+				closedir(userDir);
 				return 1;
 			}
 		}
 		closedir(userDir);
 	}
+
 	// rank 구조체 sorting 하기
-	qsort(rank, i, sizeof(usertime), compare);
+	usertime temp;
+	for (int y_index = 0; y_index < i; y_index++) {
+		for (int x_index = 0; x_index < i-1; x_index++) {
+			if (rank[x_index].study_time > rank[x_index + 1].study_time) {
+				temp = rank[x_index];
+				rank[x_index] = rank[x_index + 1];
+				rank[x_index + 1] = temp;
+			}
+		}
+	}
 
 	// sorting 한 결과 보여주기
 	printf("Today's <%s> ranking !\n", groupid);
 	for (int n = 0; n < i; n++) {
-		printf("%d.\t%s\t%lf", n + 1, rank.user_name, rank.user_time);
+		printf("%d.\t%s\t%lf", n + 1, rank[n].user_name, rank[n].study_time);
 	}
 
 	free(groupid);
 	return 0;
-}
-int compare(const void* a, const void* b) {
-	usertime* A = usertime * a;
-	usertime* B = usertime * b;
-
-	if (A->studytime < B->studytime) return -1;
-	else if (A->studytime == B->studytime) return 0;
-	else return 1;
 }
