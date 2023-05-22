@@ -549,14 +549,14 @@ void day_stats(WINDOW* win, int year, int month, int day)
 	}
 
 	srand(time(NULL));
-	timelog templog = {0, };
+	timelog templog;
 	strcpy(templog.subject, "C Language");
 	templog.start_time = 0;
 	templog.finish_time = rand() % 30 + 6;
 	templog.studytime = (double)templog.finish_time - templog.start_time;
 	write(fd1, &templog, sizeof(timelog));
 
-	timelog templog2 = {0, };
+	timelog templog2;
 	strcpy(templog2.subject, "System Programming");
 	templog2.start_time = 0;
 	templog2.finish_time = rand() % 30 + 6;
@@ -672,7 +672,7 @@ void week_stats(WINDOW* win, time_t today)
 		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
 		{
 			weeklog[week_i].studytime += templog.studytime;
-			total += templog.studytime;
+			total += weeklog[week_i].studytime;
 		}
 		close(fd);
 		
@@ -786,7 +786,7 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 {
 	char UID_dir[256];
 	sprintf(UID_dir, "%s/%s", ".", UID);
-	// mvwprintw(win, 6, 2, "%s", UID_dir);
+	mvwprintw(win, 6, 2, "%s", UID_dir);
 
 	if (chdir(UID_dir) == -1)
 	{
@@ -794,8 +794,7 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 		exit(21);
 	}
 	
-	// 구조체 배열은 static 한 건가?
-	timelog subjectlog[100] = {0, }; // 과목별 로그
+	timelog subjectlog[100]; // 과목별 로그
 	int year, month, day;
 	year = statmonth_tm.tm_year + 1900;
 	month = statmonth_tm.tm_mon + 1;
@@ -820,7 +819,7 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 			day_i = 30;
 	}
 	
-	for(; day_i>=1; day_i--)
+	for(; day_i>=0; day_i--)
 	{
 		char statfile[15];
 		day = day_i;
@@ -835,33 +834,29 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 		timelog templog;
 		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
 		{
-			int subject_i;
 			total += templog.studytime;
-			for(subject_i=0; subject_i<subject_count; subject_i++)
+			for(int subject_i=0; subject_i<subject_count; subject_i++)
 			{
 				if(strcmp(subjectlog[subject_i].subject, templog.subject) == 0)
 				{	
 					subjectlog[subject_i].studytime += templog.studytime;
-					break;
+					continue;
 				}
 			}
-			if(subject_i != subject_count)
-				continue;
 			strcpy(subjectlog[subject_count].subject, templog.subject);
 			subjectlog[subject_count++].studytime += templog.studytime;
 		}
 		close(fd);
 	}
-	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes       ", total * 30);
+	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes       %d", total * 30, subject_count);
 	for(int subject_i = 0; subject_i<subject_count; subject_i++)
 	{
-		mvwprintw(win, 8+subject_i*3, 2, "%d. %s", subject_i+1, subjectlog[subject_i].subject);
-		mvwprintw(win, 9+subject_i*3, 2, "------------------------------------- %7.0f minutes", subjectlog[subject_i].subject, subjectlog[subject_i].studytime * 30);
+		mvwprintw(win, 8+subject_i*3, 2, "%d. %20s", subject_i+1, subjectlog[subject_i].subject);
+		mvwprintw(win, 9+subject_i*3, 2, "------------------------------ %7.0f minutes", subjectlog[subject_i].subject, subjectlog[subject_i].studytime * 30);
 	}
-	for (int subject_i = 0; subject_i < subject_count; subject_i++)
-		for(int j = 0; j < subjectlog[subject_i].studytime / 30; j++)
-			mvwprintw(win, 9+3*subject_i, 2+j, "%%");
-	
+	//	for (int i = 0; i < weeklog[week_i].studytime / 2.5; i++)
+	//		mvwprintw(win, 8+week_i, 14+i, "%%");
+	//	mvwprintw(win, 8+week_i, 45, "%4.0f minutes", weeklog[week_i].studytime * 30);
 	if (chdir("..") == -1)
 	{
 		perror("chdir");
@@ -908,6 +903,52 @@ void menu3_join(WINDOW* win) {
 	//If the user has a group id, should we tell users to leave the group and rejoin to another group?
 	mvwprintw(win, 6, 2, "Enter the GROUP ID that you want to join : ");
 	mvwgetstr(win, 6, 45, groupid);
+
+	// ./users/no_group에 있던 userid 디렉토리 있는지 검사
+	int user_dir = 0;
+	char* no_dir = "./users/no_group";
+	DIR* noDir = opendir(no_dir);
+	if (noDir != NULL) {
+		struct dirent* no_entry;
+		while ((no_entry = readdir(noDir)) != NULL) {
+			if (no_entry->d_type == DT_DIR && strcmp(no_entry->d_name, userid) == 0) {
+				user_dir = 1; // found user dir
+			}
+			else { // user dir not found
+				// userid 디렉토리가 없다면, userid 확인하라고 에러 메세지 띄움
+				mvwprintw(win, 8, 2, "Check your USER ID or you already have a GROUP !");
+			}
+		}
+	}
+	// userid 디렉토리가 있다면, users 디렉토리에 groupid 디렉토리가 있는지 검사
+	int group_dir = 0;
+	char* g_dir = malloc(sizeof(char*) * 40); //to save groupid path
+	strcpy(g_dir, no_dir);
+	strcat(g_dir, "/");
+	strcat(g_dir, userid); // making groupid path
+
+	if (user_dir == 1) { // no_group에 user 디렉토리가 있다면
+		DIR* gDir = opendir(g_dir);
+		if (gDir != NULL) {
+			struct dirent* g_entry;
+			while ((g_entry = readdir(gDir)) != NULL) {
+				if (g_entry->d_type = DT_DIR && strcmp(g_entry->d_name, groupid) == 0) {
+					group_dir = 1;
+				}
+			}
+		}
+
+	}
+	// groupid 디렉토리가 없다면 , group 디렉토리를 생성하고 userid 디렉토리 옮김
+	// -> group_dir == 0 && user_dir == 1
+	if (group_dir == 0 && user_dir == 1) {
+
+	}
+	// groupid 디렉토리가 있다면 , 그 groupid 디렉토리 안으로 userid 디렉토리 옮김
+	// -> group_dir == 1 && user_dir == 1
+	else if (group_dir == 1 && user_dir == 1) {
+
+	}
 
 	int ufd = usersFd;
 	int read_st = 0;
