@@ -20,6 +20,20 @@
 #define ARROW_LEFT 4
 #define ARROW_RIGHT 5
 
+typedef struct timelog // 공부 시간 기록을 저장하는 구조체
+{
+	// Studyuser info; 
+	char subject[30];
+	time_t start_time; // 공부 시작 시간
+	time_t finish_time; // 공부 종료 시간
+	double studytime; // 공부 시간
+} timelog;
+
+typedef struct usertime {
+	char user_name[10];
+	double user_time;
+}usertime;
+
 int main(){
 		
 	char* groupid = malloc(sizeof(char*) * MAX);
@@ -52,11 +66,6 @@ int main(){
 	// users/group_name 열어서 user 조회하기
 	strcat(g_dir, "./users/");
 	strcat(g_dir, groupid);
-
-	typedef struct usertime {
-		char user_name[10];
-		double user_time;
-	}usertime;
 	
 	usertime rank[10];
 
@@ -119,23 +128,35 @@ int main(){
 			if ((fd = open(dateStr, O_RDONLY)) != -1) {
 				//파일 구조체 단위로 읽기
 				while (read(fd, &todaytime, sizeof(timelog)) {
-					rank[i].user_time += todaytime.studytime;
+					rank[s].user_time += todaytime.studytime;
 				}
-				fclose(today_file); 
+				fclose(today_file);
 			}
 			else {
 				printf("Error opening %s file.\n", dateStr);
-				closedir(dir); 
-				return 1; 
+				closedir(dir);
+				return 1;
 			}
 		}
 		closedir(userDir);
 	}
 	// rank 구조체 sorting 하기
-	// sorting 한 결과 보여주기
+	qsort(rank, i, sizeof(usertime), compare);
 
-	
+	// sorting 한 결과 보여주기
+	printf("Today's <%s> ranking !\n", groupid);
+	for (int n = 0; n < i; n++) {
+		printf("%d.\t%s\t%lf", n + 1, rank.user_name, rank.user_time);
+	}
 
 	free(groupid);
 	return 0;
+}
+int compare(const void* a, const void* b) {
+	usertime* A = usertime * a;
+	usertime* B = usertime * b;
+
+	if (A->studytime < B->studytime) return -1;
+	else if (A->studytime == B->studytime) return 0;
+	else return 1;
 }
