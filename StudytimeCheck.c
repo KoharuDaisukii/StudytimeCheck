@@ -424,24 +424,24 @@ void main_screen()
 
 	move(x, y + 40);
 	printw("Welcome! %s!", UID);
-	move(x, y + 41);
+	move(x + 1, y + 40);
 	printw("1. Studytime Measuring");
-	move(x, y + 42);
+	move(x + 2, y + 40);
 	printw("2. Display Stats");
-	move(x, y + 43);
+	move(x + 3, y + 40);
 	printw("3. Group");
-	move(x, y + 44);
+	move(x + 4, y + 40);
 	printw("4. My profile");
-	move(x, y + 45);
+	move(x + 5, y + 40);
 	printw("5. Settings");
-	move(x, y + 46);
+	move(x + 6, y + 40);
 	printw("6. Exit");
 	refresh();
 }
 
 void menu2()
 {
-	WINDOW* win = newwin(35, 60, 1, 1);
+	WINDOW* win = newwin(34, 60, 1, 1);
 
 	char c;
 	while (1)
@@ -463,12 +463,12 @@ void menu2()
 void menu2_screen(WINDOW* win)
 {
 	wclear(win);
-	box(win, '|', '+');
+	box(win, '|', '-');
 	mvwprintw(win, 3, 2, "Display stats                       ");
-	mvwprintw(win, 5, 2, "1. Today's Studytime                ");
-	mvwprintw(win, 6, 2, "2. This week's Studytime            ");
-	mvwprintw(win, 7, 2, "3. This month's Studytime           ");
-	mvwprintw(win, 17, 2, "\'q\' to quit");
+	mvwprintw(win, 6, 2, "1. Today's Studytime                ");
+	mvwprintw(win, 8, 2, "2. This week's Studytime            ");
+	mvwprintw(win, 10, 2, "3. This month's Studytime           ");
+	mvwprintw(win, 30, 2, "\'q\' to quit");
 	wrefresh(win);
 }
 
@@ -498,7 +498,7 @@ void menu2_1(WINDOW* win)
 		else
 			mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d           ", stat_year, stat_month, stat_day);
 		mvwprintw(win, 6, 2, "                         ");
-		mvwprintw(win, 7, 2, "                         ");
+		mvwprintw(win, 10, 2, "                         ");
 		day_stats(win, stat_year, stat_month, stat_day);
 		wrefresh(win);
 
@@ -612,7 +612,7 @@ void menu2_2(WINDOW* win)
 		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
 		mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d ~ %04d-%02d-%02d", startweek_tm.tm_year + 1900, startweek_tm.tm_mon + 1, startweek_tm.tm_mday, endweek_tm.tm_year + 1900, endweek_tm.tm_mon + 1, endweek_tm.tm_mday);
 		mvwprintw(win, 6, 2, "                         ");
-		mvwprintw(win, 7, 2, "                         ");
+		mvwprintw(win, 10, 2, "                         ");
 		week_stats(win, endweek);
 		wrefresh(win);
 
@@ -662,8 +662,8 @@ void week_stats(WINDOW* win, time_t today)
 		int fd;
 		if ((fd = open(statfile, O_RDONLY)) == -1)
 		{	
-			mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: ------------------------------", year, month, day, weeklog[week_i].studytime * 30);
-			mvwprintw(win, 8+week_i, 45, "%4.0f minutes", weeklog[week_i].studytime * 30);
+			mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f minutes", year, month, day, 0);
+			mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
 			today -= SECONDS_PER_DAY;
 			continue;
 		}
@@ -676,10 +676,10 @@ void week_stats(WINDOW* win, time_t today)
 		}
 		close(fd);
 		
-		mvwprintw(win, 8+week_i, 2, "%04d-%02d-%02d: ------------------------------", year, month, day, weeklog[week_i].studytime * 30);
+		mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f minutes", year, month, day, weeklog[week_i].studytime * 30);
+		mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
 		for (int i = 0; i < weeklog[week_i].studytime / 2.5; i++)
-			mvwprintw(win, 8+week_i, 14+i, "%%");
-		mvwprintw(win, 8+week_i, 45, "%4.0f minutes", weeklog[week_i].studytime * 30);
+			mvwprintw(win, 9+week_i*3, 3+i, "%%");
 		today -= SECONDS_PER_DAY;
 	}
 	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes", total * 30);
@@ -750,7 +750,7 @@ void menu2_3(WINDOW* win)
 		}
 		
 		mvwprintw(win, 6, 2, "                         ");
-		mvwprintw(win, 7, 2, "                         ");
+		mvwprintw(win, 10, 2, "                         ");
 		month_stats(win, statmonth_tm);
 		wrefresh(win);
 
@@ -874,7 +874,7 @@ void menu3() {
 	noecho();
 	//wclear(win);
 	// make new window
-	WINDOW* win = newwin(50, 100, 1, 1);
+	WINDOW* win = newwin(34, 60, 1, 1);
 
 	char menu;
 	while (1) {
@@ -896,7 +896,7 @@ void menu3() {
 void menu3_join(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '_');
+	box(win, '|', '-');
 	wrefresh(win);
 
 	echo();
@@ -1256,7 +1256,7 @@ void menu3_screen(WINDOW* win) {
 
 void menu4()
 {
-	WINDOW* win = newwin(20, 60, 1, 1);
+	WINDOW* win = newwin(34, 60, 1, 1);
 	box(win, '|', '+');
 
 	int ufd = usersFd;
@@ -1300,7 +1300,7 @@ typedef struct
 */
 void menu5(DIR* dir_ptr)
 {
-	WINDOW* win = newwin(20, 60, 1, 1);
+	WINDOW* win = newwin(34, 60, 1, 1);
 
 	char c;
 	while (1)
