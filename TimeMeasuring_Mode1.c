@@ -116,6 +116,6 @@ int main(int argc,char* argv[]){
    //printf("%d:%d:%d\n",hours,minutes,seconds_);
    return 0;
 }	
-
+//예쁜형식버전..필요없..
 
 
