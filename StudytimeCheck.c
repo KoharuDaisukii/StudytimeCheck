@@ -4,6 +4,7 @@
 #include <ctype.h> // toupper, isalpha, isdigit
 #include <sys/stat.h> // mkdir
 #include <sys/types.h> // mkdir, lseek
+#include <sys/wait.h> // wait
 #include <fcntl.h> // open
 #include <dirent.h> // struct dirent
 #include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
@@ -61,10 +62,11 @@ void menu3_join(WINDOW* win);
 void menu3_leave(WINDOW* win);
 void menu3_rank(WINDOW* win);
 
-void menu4();
-void menu5(DIR*);
-void menu5_screen(WINDOW* win);
-void menu5_deleteAccount(WINDOW* win, DIR*);
+void menu4(DIR*);
+void menu4_screen(WINDOW* win);
+void menu4_profile(WINDOW *win);
+void menu4_help(WINDOW *win);
+void menu4_deleteAccount(WINDOW* win, DIR*);
 
 int rmdir_r(DIR* path);
 
@@ -105,9 +107,8 @@ int main(int argc, char* argv[])
 		// if(menu == '1') menu1();
 		if (menu == '2') menu2();
 		if (menu == '3') menu3();
-		if (menu == '4') menu4();
-		if (menu == '5') menu5(UID_dirptr);
-		if (menu == '6') break;
+		if (menu == '4') menu4(UID_dirptr);
+		if (menu == '5') break;
 		if (user_dead == 1) break;
 	}
 
@@ -431,11 +432,9 @@ void main_screen()
 	move(x + 3, y + 40);
 	printw("3. Group");
 	move(x + 4, y + 40);
-	printw("4. My profile");
+	printw("4. Settings");
 	move(x + 5, y + 40);
-	printw("5. Settings");
-	move(x + 6, y + 40);
-	printw("6. Exit");
+	printw("5. Exit");
 	refresh();
 }
 
@@ -795,7 +794,7 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 	}
 	
 	// 구조체 배열은 static 한 건가?
-	timelog subjectlog[100] = {0, }; // 과목별 로그
+	timelog subjectlog[7] = {0, }; // 과목별 로그
 	int year, month, day;
 	year = statmonth_tm.tm_year + 1900;
 	month = statmonth_tm.tm_mon + 1;
@@ -993,7 +992,7 @@ void menu3_join(WINDOW* win) {
 void menu3_leave(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '_');
+	box(win, '|', '-');
 	wrefresh(win);
 
 	echo();
@@ -1063,7 +1062,7 @@ void menu3_leave(WINDOW* win) {
 void menu3_rank(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '_');
+	box(win, '|', '-');
 	wrefresh(win);
 
 	echo();
@@ -1115,7 +1114,7 @@ void menu3_screen(WINDOW* win) {
 	int x = 3;
 	int y = 7;
 
-	box(win, '|', '_');
+	box(win, '|', '-');
 
 	//G
 	mvwprintw(win, x, y, "*");
@@ -1254,63 +1253,19 @@ void menu3_screen(WINDOW* win) {
 	wrefresh(win);
 }
 
-void menu4()
-{
-	WINDOW* win = newwin(34, 60, 1, 1);
-	box(win, '|', '+');
-
-	int ufd = usersFd;
-	Studyuser s_user; // 내 정보 읽어오기
-	lseek(ufd, -sizeof(Studyuser), SEEK_CUR);
-	read(ufd, &s_user, sizeof(Studyuser));
-
-	struct tm* tm_ptr;
-
-	mvwprintw(win, 3, 2, "%s\'s profile", s_user.user_ID);
-	mvwprintw(win, 5, 2, "User ID: %s", s_user.user_ID);
-	mvwprintw(win, 6, 2, "Group ID: %s", s_user.group_ID);
-
-	tm_ptr = localtime(&(s_user.signup)); // time_t-> struct tm
-	mvwprintw(win, 8, 2, "Sign up time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
-	mvwprintw(win, 8, 59, "|");
-	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
-	mvwprintw(win, 9, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
-	mvwprintw(win, 9, 59, "|");
-	mvwprintw(win, 17, 2, "%s", "\'q\' to quit");
-	
-	wrefresh(win);
-
-	char quit = '0';
-	while ((quit = wgetch(win)) != 'q'); // q 누르면 나가기
-	clear();
-	wrefresh(win);
-	delwin(win);
-
-	return;
-}
-
-
-/*
-typedef struct
-{
-	short id; // device id
-	int x, y, z; // 마우스 커서 위치q
-	mmask_t bstate; // 버튼의 상태 비트
-} MEVENT;
-*/
-void menu5(DIR* dir_ptr)
+void menu4(DIR* dir_ptr)
 {
 	WINDOW* win = newwin(34, 60, 1, 1);
 
 	char c;
 	while (1)
 	{
-		menu5_screen(win);
+		menu4_screen(win);
 		c = wgetch(win);
 		if (c == 'q') break;
-		if (c == '1');
-		if (c == '2');
-		if (c == '3') menu5_deleteAccount(win, dir_ptr); // 3 누르면 계정 삭제할지 말지 선택[        *^[[A^*
+		if (c == '1') menu4_profile(win);
+		if (c == '2') menu4_help(win);
+		if (c == '3') menu4_deleteAccount(win, dir_ptr); // 3 누르면 계정 삭제할지 말지 선택
 
 		if (user_dead == 1) break;
 	}
@@ -1319,33 +1274,92 @@ void menu5(DIR* dir_ptr)
 	delwin(win);
 }
 
-void menu5_screen(WINDOW* win)
+void menu4_screen(WINDOW* win)
 {
-	box(win, '|', '+');
+	box(win, '|', '-');
 	mvwprintw(win, 3, 2, "Settings");
-	mvwprintw(win, 5, 2, "1. ??");
-	mvwprintw(win, 6, 2, "2. ???");
-	mvwprintw(win, 7, 2, "3. Delete account");
-	mvwprintw(win, 17, 2, "\'q\' to quit");
+	mvwprintw(win, 6, 2, "1. My profile");
+	mvwprintw(win, 8, 2, "2. help");
+	mvwprintw(win, 10, 2, "3. Delete account");
+	mvwprintw(win, 30, 2, "\'q\' to quit");
 	wrefresh(win);
 }
 
-void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
+void menu4_profile(WINDOW* win)
+{
+	int ufd = usersFd;
+	Studyuser s_user; // 내 정보 읽어오기
+	lseek(ufd, -sizeof(Studyuser), SEEK_CUR);
+	read(ufd, &s_user, sizeof(Studyuser));
+
+	struct tm* tm_ptr;
+
+	mvwprintw(win, 3, 2, "Settings - %s\'s profile", s_user.user_ID);
+	mvwprintw(win, 6, 2, "User ID: %s", s_user.user_ID);
+	mvwprintw(win, 8, 2, "Group ID: %s", s_user.group_ID);
+
+	tm_ptr = localtime(&(s_user.signup)); // time_t-> struct tm
+	mvwprintw(win, 10, 2, "                         ");
+	mvwprintw(win, 11, 2, "Sign up time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
+	mvwprintw(win, 11, 59, "|");
+	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
+	mvwprintw(win, 13, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
+	mvwprintw(win, 13, 59, "|");
+	mvwprintw(win, 30, 2, "%s", "\'q\' to quit");
+	
+	wrefresh(win);
+
+	char quit = '0';
+	while ((quit = wgetch(win)) != 'q'); // q 누르면 나가기
+	
+	wclear(win);
+	wrefresh(win);
+
+	return;
+}
+
+void menu4_help(WINDOW *win)
+{
+	def_prog_mode();
+	endwin();
+	
+	pid_t pid;
+	if((pid = fork()) == -1)
+	{
+		perror("fork");
+		exit(40);
+	}
+	
+	if(pid == 0) // child
+	{
+		execlp("view", "view", "../../README", NULL);
+		perror("execlp");
+		exit(41);
+	}
+	else
+	{
+		wait(NULL);
+		reset_prog_mode();
+		wrefresh(win);
+	}
+}
+
+void menu4_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 {
 	char yesno;
 	curs_set(1);
 	mvwprintw(win, 17, 2, "             ");
-	mvwprintw(win, 9, 2, "Delete your account from StudytimeCheck? (Y/N) "); wrefresh(win);
+	mvwprintw(win, 13, 2, "Delete your account from StudytimeCheck? (Y/N) "); wrefresh(win);
 	while (1)
 	{
 		yesno = wgetch(win); // 삭제하려면 y 입력
 		yesno = toupper(yesno);
 		if (yesno == 'Y')
 		{
-			mvwprintw(win, 11, 2, "Enter your ID if you really want to leave.");
+			mvwprintw(win, 15, 2, "Enter your ID if you really want to leave: ");
 			wrefresh(win);
-			mvwprintw(win, 13, 3, "          )");
-			mvwprintw(win, 13, 2, "(");
+			mvwprintw(win, 15, 46, "          )");
+			mvwprintw(win, 15, 45, "(");
 			wrefresh(win);
 			char input[11] = "\0", input_c;
 			int i = 0;
@@ -1356,15 +1370,15 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 				{
 					if (i < 10) // 10글자 이상 입력 blocking
 					{
-						mvwprintw(win, 13, 3 + i, "%c", input_c);
+						mvwprintw(win, 15, 46 + i, "%c", input_c);
 						input[i++] = input_c;
 						input[i] = '\0';
 					}
 				}
 				if ((input_c == '\b' || input_c == 127) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
 				{
-					mvwprintw(win, 13, 3 + --i, " ");
-					move(13, 1 + i);
+					mvwprintw(win, 15, 46 + --i, " ");
+					move(15, 1 + i);
 				}
 				if (input_c == '\n') // 엔터 입력
 				{
@@ -1385,10 +1399,16 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 							perror("rmdir");
 							exit(50);
 						}
-						mvwprintw(win, 13, 2, "Deactivated your account. See you Again...");
+						mvwprintw(win, 16, 2, "Deactivated your account. See you Again...");
 						wrefresh(win);
 						sleep(2);
 						user_dead = 1; // 유저가 탈퇴했음.
+					}
+					else
+					{
+						mvwprintw(win, 16, 2, "Wrong zzz");
+						wrefresh(win);
+						sleep(2);
 					}
 					break;
 				}
@@ -1398,7 +1418,7 @@ void menu5_deleteAccount(WINDOW* win, DIR* uid_dirptr)
 		}
 		if (yesno == 'N')
 		{
-			mvwprintw(win, 9, 2, "                                               ");
+			mvwprintw(win, 12, 2, "                                               ");
 			wrefresh(win);
 			break;
 		}
