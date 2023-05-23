@@ -529,8 +529,8 @@ void day_stats(WINDOW* win, int year, int month, int day)
 	char statfile[256];
 
 	sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-	mvwprintw(win, 6, 20, "%s", statfile);
-
+	
+	
 	char UID_dir[256];
 	sprintf(UID_dir, "%s/%s", ".", UID);
 	mvwprintw(win, 6, 2, "%s", UID_dir);
@@ -551,19 +551,20 @@ void day_stats(WINDOW* win, int year, int month, int day)
 	timelog templog = {0, };
 	strcpy(templog.subject, "C Language");
 	templog.start_time = 0;
-	templog.finish_time = rand() % 30 + 6;
+	templog.finish_time = rand() % 10800 + 2;
 	templog.studytime = (double)templog.finish_time - templog.start_time;
 	write(fd1, &templog, sizeof(timelog));
 
 	timelog templog2 = {0, };
 	strcpy(templog2.subject, "System Programming");
 	templog2.start_time = 0;
-	templog2.finish_time = rand() % 30 + 6;
+	templog2.finish_time = rand() % 10800 + 2;
 	templog2.studytime = (double)templog2.finish_time - templog2.start_time;
 	write(fd1, &templog2, sizeof(timelog));
 	close(fd1);
 
 	int fd2;
+	double total = 0.0;
 	if ((fd2 = open(statfile, O_RDONLY)) == -1)
 	{
 		perror("open");
@@ -572,15 +573,18 @@ void day_stats(WINDOW* win, int year, int month, int day)
 
 	timelog templog3;
 	int j = 0;
-	mvwprintw(win, 9, 2, "--------------------------------------");
-	mvwprintw(win, 12, 2, "--------------------------------------");
+	mvwprintw(win, 9, 2, "|----------------------------------------------------|");
+	mvwprintw(win, 12, 2, "|----------------------------------------------------|");
 	while (read(fd2, &templog3, sizeof(timelog)) >= sizeof(timelog))
 	{
-		mvwprintw(win, 8 + 3 * j, 2, "%s studytime: %.0f minutes         ", templog3.subject, templog3.studytime * 30);
-		for (int i = 0; i < templog3.studytime; i++)
-			mvwprintw(win, 9 + 3 * j, 2 + i, "%%");
+		total += templog3.studytime;
+		mvwprintw(win, 8 + 3 * j, 2, "%s studytime: %.0f seconds         ", templog3.subject, templog3.studytime);
+		for (int i = 0; i < templog3.studytime / 210; i++)
+			mvwprintw(win, 9 + 3 * j, 3 + i, "%%");
 		j++;
 	}
+	
+	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
 
 	if (chdir("..") == -1)
 	{
@@ -661,7 +665,7 @@ void week_stats(WINDOW* win, time_t today)
 		int fd;
 		if ((fd = open(statfile, O_RDONLY)) == -1)
 		{	
-			mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f minutes", year, month, day, 0);
+			mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, 0);
 			mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
 			today -= SECONDS_PER_DAY;
 			continue;
@@ -675,13 +679,13 @@ void week_stats(WINDOW* win, time_t today)
 		}
 		close(fd);
 		
-		mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f minutes", year, month, day, weeklog[week_i].studytime * 30);
+		mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, weeklog[week_i].studytime);
 		mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
-		for (int i = 0; i < weeklog[week_i].studytime / 2.5; i++)
+		for (int i = 0; i < weeklog[week_i].studytime / 1000; i++)
 			mvwprintw(win, 9+week_i*3, 3+i, "%%");
 		today -= SECONDS_PER_DAY;
 	}
-	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes", total * 30);
+	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
 	
 	if (chdir("..") == -1)
 	{
@@ -851,14 +855,14 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 		}
 		close(fd);
 	}
-	mvwprintw(win, 6, 2, "Total studytime: %.0f minutes       ", total * 30);
+	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds       ", total);
 	for(int subject_i = 0; subject_i<subject_count; subject_i++)
 	{
 		mvwprintw(win, 8+subject_i*3, 2, "%d. %s", subject_i+1, subjectlog[subject_i].subject);
-		mvwprintw(win, 9+subject_i*3, 2, "------------------------------------- %7.0f minutes", subjectlog[subject_i].subject, subjectlog[subject_i].studytime * 30);
+		mvwprintw(win, 9+subject_i*3, 2, "|------------------------------------- %7.0f seconds", subjectlog[subject_i].subject, subjectlog[subject_i].studytime);
 	}
 	for (int subject_i = 0; subject_i < subject_count; subject_i++)
-		for(int j = 0; j < subjectlog[subject_i].studytime / 30; j++)
+		for(int j = 0; j < subjectlog[subject_i].studytime / 5000; j++)
 			mvwprintw(win, 9+3*subject_i, 2+j, "%%");
 	
 	if (chdir("..") == -1)
