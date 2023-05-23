@@ -48,29 +48,36 @@ int main(int argc,char* argv[]){
    addstr("Please enter the subject you want to study: ");
    refresh();
    getstr(log.subject); // 과목 받기
-  
+   clear();
+
    addstr("Press spacebar to measure study time.");
-   refresh();
    move(LINES - 1, COLS - strlen("quit: q"));
    addstr("quit: q");
-   refresh();
-   clear();
+   refresh();  
+   
 
 
 	while(1){ 
-      
         key = getch();
+        if(key=='q'){
+         endwin();
+         return 0;
+        }
+
       	if (key == ' ') {
+            clear();
+            move(LINES/2, COLS/2);
+            addstr("studying...");
+            refresh();
+            move(LINES - 1, COLS - strlen("Press spacebar to stop"));
+            addstr("Press spacebar to stop");
+            refresh();
+
          	if (check == 0) {
             		log.start_time = time(NULL); // 현재 시간으로 할당
             		time_info_start = localtime(&log.start_time);
                   sprintf(filename,"%04d%02d%02d.txt",time_info_start->tm_year+1900,time_info_start->tm_mon+1,time_info_start->tm_mday);
-                  move(LINES/2, COLS/2);
-                  addstr("studying...");
-                  refresh();
-                  move(LINES - 1, COLS - strlen("Press spacebar to stop"));
-                  addstr("Press spacebar to stop");
-                  refresh();
+                  
 
                   file = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
                   if (file == -1) {
