@@ -40,6 +40,10 @@
 4. 그룹 랭킹 볼 수 있음
 5. 숫자 4 또는 'q'를 입력하면 메인 메뉴로 돌아갑니다.
 ### Settings
+1. 1번(My profile)을 선택하면 본인의 프로필을 열람할 수 있습니다.
+2. 2번(Help)를 선택하면 현재 보고 있는 README 파일을 보여줍니다.
+3. 3번(Delete Account)을 선택하면 "Delete your account from StudytimeCheck? (Y/N)"이라는 안내 문구가 나옵니다.
+- Y
 ---
 ## 팀원
 1. 강봉수(20학번, 글로벌소프트웨어융합전공)
