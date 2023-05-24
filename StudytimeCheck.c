@@ -686,9 +686,14 @@ void week_stats(WINDOW* win, time_t today)
 		
 		mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, weeklog[week_i].studytime);
 		mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
-		for (int i = 0; i < weeklog[week_i].studytime / 1000; i++)
-			mvwprintw(win, 9+week_i*3, 3+i, "%%");
 		today -= SECONDS_PER_DAY;
+		if(weeklog[week_i].studytime >= 18000)
+		{	
+			mvwprintw(win, 9+week_i*3, 3, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+			continue;
+		}
+		for (int i = 0; i < weeklog[week_i].studytime / 350; i++)
+			mvwprintw(win, 9+week_i*3, 3+i, "%%");
 	}
 	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
 	
