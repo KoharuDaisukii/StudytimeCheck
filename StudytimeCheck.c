@@ -979,10 +979,13 @@ void menu3_create(WINDOW* win) {
 
 		// 현재 경로 ./users
 		// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
+
+		// 디렉토리 경로 바꾸기 실패
 		if (rename(old_path, new_path) != 0) {
 			perror("rename");
 			return;
 		}
+		// 디렉토리 경로 바꾸기 성공
 		else {
 			int fd1, fd2;
 
@@ -992,29 +995,33 @@ void menu3_create(WINDOW* win) {
 			add.group_users = 1;
 
 			// 파일이 없어서 fd != -1 -> 파일 생성됨
-			if ((fd1 = open("group.txt", O_RDWR | O_CREAT | O_EXCL, 0755)) != -1) {
-
+			if ((fd1 = open("group.txt", O_RDWR | O_CREAT | O_EXCL, 0755)) > 0) {
+				wrefresh(win);
 				// 파일에 구조체 단위로 쓰기
 				lseek(fd1, 0, SEEK_SET);
 				write(fd1, &add, sizeof(groupinfo));
 			}
 			else { // 파일이 있어서 fd == -1임
-
+				wrefresh(win);
 				// 파일을 읽고 쓰는 권한으로 열기
-				fd2 = open("group.txt", O_RDWR);
+				fd2 = open("group.txt", O_RDWR | O_APPEND);
 
 				// 파일을 구조체 단위로 읽고 그룹 이름이 중복되는 것이 있는지 검사
 				int isgroup = 0;
 				lseek(fd2, 0, SEEK_SET);
-				while (read(fd2, &add, sizeof(groupinfo))) {
+
+				// 읽을 구조체 선언하기
+				groupinfo rd;
+				while (read(fd2, &rd, sizeof(groupinfo))) {
 					// 파일에 그룹이 존재하는 경우 = 이미 존재하는 그룹 -> 그러면 안됨
-					if (strcmp(add.group_name, groupid) == 0) {
+					if (strcmp(rd.group_name, groupid) == 0) {
 						isgroup = 1;
 						break;
 					}
 				}
 				// 파일에 그룹이 존재하지 않는 경우
 				if (isgroup == 0) {
+					wrefresh(win);
 					lseek(fd2, 0, SEEK_END);
 					write(fd2, &add, sizeof(groupinfo));
 				}
@@ -1028,6 +1035,8 @@ void menu3_create(WINDOW* win) {
 			mvwprintw(win, 5, 2, "You have CREATE and JOIN <%s> !!!", groupid);
 			mvwprintw(win, 7, 2, "If you want to go BACK, press 'q' !");
 			wrefresh(win);
+
+
 		}
 
 
@@ -1036,6 +1045,7 @@ void menu3_create(WINDOW* win) {
 	char menu;
 	while ((menu = getch()) != 'q');
 
+	free(groupid);
 	wclear(win);
 	wrefresh(win);
 	return;
