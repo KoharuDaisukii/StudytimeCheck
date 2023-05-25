@@ -952,6 +952,8 @@ void menu3_create(WINDOW* win) {
 			mvwprintw(win, 9, y, " %d ...", 4 - t);
 			wrefresh(win);
 		}
+		sleep(1);
+		wclear(win);
 		return;
 	}
 	else // group_flag == 0, 생성된 그룹이 없을 때
@@ -1113,7 +1115,7 @@ void menu3_join(WINDOW* win) {
 		for (int t = 1; t <= 3; t++) {
 			sleep(1);
 			int y = 5 * t - 2;
-			mvwprintw(win, 9, y, " %d ...", 4 - t);
+			mvwprintw(win, 10, y, " %d ...", 4 - t);
 			wrefresh(win);
 		}
 		sleep(1);
@@ -1199,8 +1201,8 @@ void menu3_join(WINDOW* win) {
 				}
 
 			}
-			close(fd2);
 		}
+		close(fd2);
 		// 그룹에 10이하이면
 		if (down_ten == 1) {
 			// 현재 경로 ./users
@@ -1245,7 +1247,7 @@ void menu3_join(WINDOW* win) {
 
 		for (int t = 1; t <= 3; t++) {
 			sleep(1);
-			int y = 5 * t - 2;
+			int y = 5 * t - 1;
 			mvwprintw(win, 9, y, " %d ...", 4 - t);
 			wrefresh(win);
 		}
@@ -1262,16 +1264,14 @@ void menu3_join(WINDOW* win) {
 
 		for (int t = 1; t <= 3; t++) {
 			sleep(1);
-			int y = 5 * t - 2;
-			mvwprintw(win, 9, y, " %d ...", 4 - t);
+			int y = 5 * t - 1;
+			mvwprintw(win, 10, y, " %d ...", 4 - t);
 			wrefresh(win);
 		}
 		sleep(1);
 		wclear(win);
 		return;
 	}
-
-
 	char menu;
 	while ((menu = getch()) != 'q');
 
@@ -1288,64 +1288,127 @@ void menu3_leave(WINDOW* win) {
 	wrefresh(win);
 
 	echo();
-	int user_flag = 0;
-	char* userid = malloc(sizeof(char*) * MAX);
-	char yn;
-	char groupid[MAX];
 
-	mvwprintw(win, 3, 2, "Insert your USER ID : ");
-	mvwgetstr(win, 3, 24, userid);
+	// 사용자 이름 복사
+	char user[30] = { 0 };
+	strcpy(user, UID);
 
-	mvwprintw(win, 5, 2, "Do you want to leave this group ? (y/n) : ");
-	yn = mvwgetch(win, 5, 45);
+	// users.txt 에서 사용자 찾고 groupid 가져오기
+	int ufd = usersFd;
+	int isgroup = 0;
+	char groupid[30] = { 0 };
 
-	if (yn == 'y') {
-		int ufd = usersFd;
-		int read_st = 0;
-		Studyuser j_user;
+	Studyuser j_user;
 
-		lseek(ufd, 0, SEEK_SET);
-		while (read(ufd, &j_user, sizeof(Studyuser))) {
-			if (strcmp(j_user.user_ID, userid) == 0) {
-				if (strcmp(j_user.group_ID, NO_GROUP) != 0) { // when user has a group
-					user_flag = 1; // userid is found
-					strcpy(groupid, j_user.group_ID); //copying group id before changing
-					strcpy(j_user.group_ID, NO_GROUP); // GROUP ID is copy to j_user
+	lseek(ufd, 0, SEEK_SET);
+	while (read(ufd, &j_user, sizeof(Studyuser))) {
+		if (strcmp(j_user.user_ID, user) == 0) {
+			strcpy(groupid, j_user.group_ID); // GROUP ID copy
+			isgroup = 1;
+			break;
+		}
+	}
+	// users.txt에 사용자가 있을 때
+	if (isgroup == 1) {
+		// 이미 사용자는 어떤 그룹에 속하지 않음
+		if (strcmp(groupid, NO_GROUP) == 0) {
+			// 이미 속하지 않았다고 사용자한테 말하기
+			// 메뉴로 돌아가기
+		}
+		// 사용자는 그룹에 속함
+		else {
+
+			// users.txt 변경 정보 적용
+			Studyuser r_user;
+
+			lseek(ufd, 0, SEEK_SET);
+			while (read(ufd, &r_user, sizeof(Studyuser))) {
+				if (strcmp(r_user.user_ID, user) == 0) {
+					// 사용자 그룹 탈퇴 -> group id : no_group
+					strcpy(r_user.group_ID, NO_GROUP); // GROUP ID copy
 					lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
-					write(ufd, &j_user, sizeof(Studyuser)); // replacing
-					wrefresh(win);
-				}
-				else {
-					user_flag = 2;
+					// 사용자 변경 정보 덮어쓰기
+					write(ufd, &r_user, sizeof(Studyuser));
 				}
 			}
-		}
-		if (user_flag == 1) {
-			mvwprintw(win, 8, 2, "You just left in to <%s> !", groupid);
-			mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
-			wrefresh(win);
-		}
-		else if (user_flag == 0) {
-			mvwprintw(win, 8, 2, "There is NO USER ID !!!!");
-			mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
-			wrefresh(win);
-		}
-		else if (user_flag == 2) {
-			mvwprintw(win, 8, 2, "%s ! You already don't have a GROUP !!!", userid);
-			mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
-			wrefresh(win);
 
+			// group.txt 변경하기
+			int fd2;
+			// group.txt 파일 오픈
+			fd2 = open("group.txt", O_RDWR | O_APPEND);
+
+			if (fd2 != -1) {
+				// 파일을 구조체 단위로 읽고 그룹 이름이 중복되는 것이 있는지 검사
+				int isgroup = 0;
+				lseek(fd2, 0, SEEK_SET);
+
+				// 읽을 구조체 선언하기
+				groupinfo rd;
+				int no_one = 0;
+				while (read(fd2, &rd, sizeof(groupinfo))) {
+					// group.txt에 그룹 찾기
+					if (strcmp(rd.group_name, groupid) == 0) {
+						// 그룹 제한 10명 검사 (남은 인원이 한명이 아닐 때)
+						if (rd.group_users != 1) {
+							// 한명 줄이기
+							rd.group_users -= 1;
+							lseek(fd2, -sizeof(Studyuser), SEEK_CUR);
+							write(fd2, &rd, sizeof(Studyuser));
+							break;
+						}
+						// 사용자 1명 밖에 안남았을 때
+						else {
+							no_one = 1;
+							//group.txt에서 그 그룹 정보 지우기
+							// 지우는데 중간에서 지우면 공백은 어떡하지 ??
+						}
+
+					}
+				}
+			}
+			close(fd2);
+			else {
+				perror("open");
+				wclear(win);
+				return;
+			}
+
+			// ./users/groupid/user_name 경로를 ./users/no_group/user_name으로 변경
+
+			// newpath 경로 만들기
+			char new_path[50] = { 0 };
+			strcpy(old_path, "./no_group/");
+			strcat(old_path, user);
+
+			// oldpath 경로 만들기
+			char old_path[50] = { 0 };
+			strcpy(new_path, "./");
+			strcat(new_path, groupid);
+			strcat(new_path, "/");
+			strcat(new_path, user);
+
+			// 현재 경로 ./users
+			// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
+
+			// 디렉토리 경로 바꾸기 실패
+			if (rename(old_path, new_path) != 0) {
+				perror("rename");
+				return;
+			}
+			else {
+				// 경로 잘 바꾸어짐
+			}
+
+			// 실행 안되면 getcwd로 경로 확인하면서 해결하기
 		}
+
 	}
-	else {
-		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
-		wrefresh(win);
-	}
+
 
 	char menu;
 	while ((menu = getch()) != 'q');
 
-	free(userid);
+
 	wclear(win);
 	wrefresh(win);
 	return;
