@@ -44,7 +44,7 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 } timelog;
 
 typedef struct usertime { //group ranking 때 필요한 구조체
-	char user_name[10];
+	char user_name[50];
 	double study_time;
 }usertime;
 
@@ -62,6 +62,7 @@ void month_stats(WINDOW* win, struct tm statmonth_tm);
 
 // MENU 3 관련 함수 
 void menu3();
+void menu3_create(WINDOW* win);
 void menu3_screen(WINDOW* win);
 void menu3_join(WINDOW* win);
 void menu3_leave(WINDOW* win);
@@ -686,14 +687,9 @@ void week_stats(WINDOW* win, time_t today)
 		
 		mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, weeklog[week_i].studytime);
 		mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
-		today -= SECONDS_PER_DAY;
-		if(weeklog[week_i].studytime >= 18000)
-		{	
-			mvwprintw(win, 9+week_i*3, 3, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-			continue;
-		}
-		for (int i = 0; i < weeklog[week_i].studytime / 350; i++)
+		for (int i = 0; i < weeklog[week_i].studytime / 1000; i++)
 			mvwprintw(win, 9+week_i*3, 3+i, "%%");
+		today -= SECONDS_PER_DAY;
 	}
 	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
 	
@@ -893,16 +889,115 @@ void menu3() {
 	while (1) {
 		menu3_screen(win);
 		menu = getch();
-		if (menu == '1') menu3_join(win);
-		if (menu == '2') menu3_leave(win);
-		if(menu=='3') menu3_rank(win);
-		if (menu == '4') {
+		if (menu == '1') menu3_create(win);
+		if (menu == '2') menu3_join(win);
+		if (menu == '3') menu3_leave(win);
+		if (menu == '4') menu3_rank(win);
+		if (menu == '5') {
 			break;
 		}
 	}
 	wclear(win);
 	wrefresh(win);
 	delwin(win);
+	return;
+}
+
+void menu3_create(WINDOW* win) {
+
+	wclear(win);
+	box(win, '|', '-');
+	wrefresh(win);
+
+	echo();
+
+	// 사용자 이름 복사
+	char user[30] = { 0 };
+	strcpy(user, UID);
+
+	// 생성할 그룹 이름 받기
+	//char groupid[30] = { 0 };
+	char* groupid = malloc(sizeof(char*) * 30);
+	mvwprintw(win, 3, 2, "Enter GROUP ID that you want to create : ");
+	mvwgetstr(win, 3, 43, groupid);
+	wrefresh(win);
+
+	// ./users 안에 생성된 그룹이 있는지 검사
+	int group_flag = 0; // ./users 안에 생성된 그룹이 있는지 검사하는 flag
+	DIR* users_dir = opendir("./users");
+	struct dirent* ent;
+	if (users_dir != NULL) {
+
+		while ((ent = readdir(users_dir)) != NULL) {
+			if (ent->d_type == DT_DIR && strcmp(ent->d_name, groupid) == 0) {
+				group_flag = 1; // 이미 생성된 그룹 발견
+			}
+		}
+	}
+	closedir(users_dir);
+
+	if (group_flag == 1) {
+		mvwprintw(win, 5, 2, "<%s> already CREATED !!!");
+		mvwprintw(win, 7, 2, "Returning to group menu...");
+		wrefresh(win);
+
+		for (int t = 1; t <= 3; t++) {
+			sleep(1);
+			int y = 5 * t - 2;
+			mvwprintw(win, 9, y, " %d ...", 4 - t);
+			wrefresh(win);
+		}
+		return;
+	}
+	else // group_flag == 0, 생성된 그룹이 없을 때
+	{
+		// 현재 경로 ./users/no_group
+
+		// 현재 경로 ./users로 변경하기
+		if (chdir("..") != 0) {
+			perror("chdir");
+			return;
+		}
+
+		// ./users 안에 groupid 그룹을 생성한다
+		if (mkdir(groupid, 0755) == -1) {
+			perror("mkdir");
+			return;
+		}
+
+		// oldpath 경로 만들기
+		char old_path[50] = { 0 };
+		strcpy(old_path, "./no_group/");
+		strcat(old_path, user);
+
+		// newpath 경로 만들기
+		char new_path[50] = { 0 };
+		strcpy(new_path, "./");
+		strcat(new_path, groupid);
+		strcat(new_path, "/");
+		strcat(new_path, user);
+
+		// 현재 경로 ./users
+		// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
+		if (rename(old_path, new_path) != 0) {
+			perror("rename");
+			return;
+		}
+		else {
+			// 현재 경로 ./users
+			mvwprintw(win, 5, 2, "You have CREATE and JOIN <%s> !!!", groupid);
+			mvwprintw(win, 7, 2, "If you want to go BACK, press 'q' !");
+			wrefresh(win);
+		}
+
+
+	}
+
+	char menu;
+	while ((menu = getch()) != 'q');
+
+	wclear(win);
+	wrefresh(win);
 	return;
 }
 
@@ -1080,94 +1175,75 @@ void menu3_rank(WINDOW* win) {
 	wrefresh(win);
 
 	echo();
-	
-	char* groupid = malloc(sizeof(char*) * MAX);
-	char* userid = malloc(sizeof(char*) * MAX);
+
+	char groupid[30] = { 0 };
+	char userid[30] = { 0 };
 
 	mvwprintw(win, 3, 2, "Enter your USER ID : ");
 	mvwgetstr(win, 3, 24, userid);
-
 
 	//groupid 가지고 오기
 	int ufd = usersFd;
 	int read_st = 0;
 	Studyuser j_user;
 	int uflag = 0;
+	int i = 0;
 
 	lseek(ufd, 0, SEEK_SET);
 	while (read(ufd, &j_user, sizeof(Studyuser))) {
 		if (strcmp(j_user.user_ID, userid) == 0) {
 			uflag = 1; // userid is found
 			strcpy(groupid, j_user.group_ID);
-			mvwprintw(win, 5, 2, "Your group id is %s", groupid);
+			//mvwprintw(win, 5, 2, "Your group id is %s", groupid);
 			wrefresh(win);
 			// GROUP ID is copy to j_user
 		}
 	}
-
-
 	if (uflag == 1) { // 사용자 그룹을 얻었을 때
 		//2. users 경로에서 group_name을 찾고 그 디렉토리를 연다
 		int users_flag = 0;
 		int group_flag = 0;
-		char g_dir[30] = { 0 };
-
-		//users 디렉토리의 해당 group_name의 디렉토리 있는지 여부
-		DIR* dir_info = opendir("./users"); // ./user 디렉토리 열기
-		if (dir_info != NULL) { // NULL값 검사
-			struct dirent* ent;
-			while ((ent = readdir(dir_info)) != NULL) {
-				if (ent->d_type == DT_DIR && strcmp(ent->d_name, groupid) == 0) {
-					group_flag = 1;
-				}
-			}
-			closedir(dir_info);
-		}
-		else {
-			perror("Error opening directory.\n");
-			//exit(1);
-		}
+		char g_dir[60] = { 0 };
 
 		// users/group_name 열어서 user 조회하기
-		strcat(g_dir, "./users/");
+		strcpy(g_dir, "../");
 		strcat(g_dir, groupid);
 
-		usertime rank[10];
+		usertime rank[10] = { 0 };
 
-		int i = 0;
-		char user_name[10][10];
+		//char user_name[10][10];
 		DIR* groupdir = opendir(g_dir); // ./user/group_name 디렉토리 열기
 		if (groupdir != NULL) { // NULL값 검사
 			struct dirent* ent;
 			while ((ent = readdir(groupdir)) != NULL) {
 				if (ent->d_type == DT_DIR && strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
 					users_flag = 1;
-					strcpy(rank[i].user_name, ent->d_name);
+					wrefresh(win);
+					strncpy(rank[i].user_name, ent->d_name, sizeof(ent->d_name));
 					i++;
 				}
 			}
 			closedir(groupdir);
 		}
-
 		else {
 			perror("Error opening group directory.\n");
-			//exit(1);
+			exit(1);
 		}
-
 		// 오늘 날짜 구하기
 		time_t t = time(NULL);
 		struct tm* now = localtime(&t);
 
-		char dateStr[20] = { 0 };
+		char dateStr[40] = { 0 };
 		snprintf(dateStr, sizeof(dateStr), "%04d%02d%02d.txt", now->tm_year + 1900, now->tm_mon + 1, now->tm_mday);
 
 		// user_name 디렉토리에 들어가서 파일 존재 확인
 		struct stat buf;
-		char u_dir[40] = { 0 }; //users/group_name/users_name
+		char u_dir[60] = { 0 }; //users/group_name/users_name
 		int today_flag = 0;
 
 		for (int s = 0; s < i; s++) {
-			strcat(u_dir, g_dir);
+
+			strcpy(u_dir, g_dir);
 			strcat(u_dir, "/");
 			strcat(u_dir, rank[s].user_name);
 
@@ -1175,37 +1251,35 @@ void menu3_rank(WINDOW* win) {
 			if (u_dir != NULL) {
 				struct dirent* u_entry;
 				while ((u_entry = readdir(userDir)) != NULL) {
-					if (strcmp(u_entry->d_name, dateStr) == 0) {// finding today record
+					if (strcmp(u_entry->d_name, dateStr) == 0) { // finding today record
 						today_flag = 1;
+					}
+				}
+				if (today_flag == 1) { // today file not found
+					//파일열기
+					int fd; // file descriptor 선언
+					timelog todaytime; //timelog 구조체 todaytime 선언;
+
+					char f_dir[100] = { 0 };// to save file path
+					strcat(f_dir, u_dir);
+					strcat(f_dir, "/");
+					strcat(f_dir, dateStr); // making file path 
+
+					if ((fd = open(f_dir, O_RDWR)) != -1) {
+						//printf("calculating time...\n"); 
+						//파일 구조체 단위로 읽기
+						while (read(fd, &todaytime, sizeof(timelog))) {
+							rank[s].study_time += todaytime.studytime;
+						}
+						close(fd);
+					}
+					else {
+						closedir(userDir);
 						break;
 					}
-
-				}
-				if (today_flag == 0) { // today file not found
-					mvwprintw(win, 5, 2, "Today record NOT found !");
-					//exit(1);
-				}
-				//파일열기
-				int fd; // file descriptor 선언
-				timelog todaytime; //timelog 구조체 todaytime 선언;
-
-				char f_dir[30] = { 0 };// to save file path
-				strcat(f_dir, u_dir);
-				strcat(f_dir, "/");
-				strcat(f_dir, dateStr); // making file path 
-
-				if ((fd = open(f_dir, O_RDONLY)) != -1) {
-					//printf("calculating time...\n"); // ㅕㅑ
-					//파일 구조체 단위로 읽기
-					while (read(fd, &todaytime, sizeof(timelog))) {
-						rank[s].study_time += todaytime.studytime;
-					}
-					close(fd);
 				}
 				else {
-					perror("Error opening Today's file");
-					closedir(userDir);
-					//exit(1);
+					rank[s].study_time = 0;
 				}
 			}
 			closedir(userDir);
@@ -1215,7 +1289,7 @@ void menu3_rank(WINDOW* win) {
 		usertime temp;
 		for (int y_index = 0; y_index < i; y_index++) {
 			for (int x_index = 0; x_index < i - 1; x_index++) {
-				if (rank[x_index].study_time > rank[x_index + 1].study_time) {
+				if (rank[x_index].study_time < rank[x_index + 1].study_time) {
 					temp = rank[x_index];
 					rank[x_index] = rank[x_index + 1];
 					rank[x_index + 1] = temp;
@@ -1225,20 +1299,22 @@ void menu3_rank(WINDOW* win) {
 
 		// sorting 한 결과 보여주기
 		mvwprintw(win, 5, 2, "Today's <%s> ranking !", groupid);
-		int x = 6;
+		int x = 7;
 		int y = 2;
 		for (int n = 0; n < i; n++) {
 			mvwprintw(win, x, y, "%d.\t%s\t%lf", n + 1, rank[n].user_name, rank[n].study_time);
+			if (strcmp(rank[n].user_name, userid) == 0) {
+				mvwprintw(win, x,30, "<-");
+			}
 			x++;
+			wrefresh(win);
 		}
-
-		free(groupid);
 		
 	}
 
 	char menu;
 	while ((menu = getch()) != 'q');
-	free(userid);
+
 	wclear(win);
 	wrefresh(win);
 	return;
@@ -1380,10 +1456,11 @@ void menu3_screen(WINDOW* win) {
 
 	mvwprintw(win, x + 14, y, "You selected Group Menu !");
 	mvwprintw(win, x + 15, y, "Select group menu that you want.");
-	mvwprintw(win, x + 17, y, "1. Group Join");
-	mvwprintw(win, x + 18, y, "2. Group Leave");
-	mvwprintw(win, x + 19, y, "3. Group Ranking");
-	mvwprintw(win, x + 20, y, "4. Go back");
+	mvwprintw(win, x + 17, y, "1. Group Create");
+	mvwprintw(win, x + 18, y, "2. Group Join");
+	mvwprintw(win, x + 19, y, "3. Group Leave");
+	mvwprintw(win, x + 20, y, "4. Group Ranking");
+	mvwprintw(win, x + 21, y, "5. Go back");
 	wrefresh(win);
 }
 
@@ -1584,5 +1661,6 @@ int rmdir_r(DIR* rm_dirptr) // 유저 디렉토리 remove하는 함수, 괜히 D
 	}
 	// closedir(rm_dirptr);
 	return rmdir(UID);
+
 }
 
