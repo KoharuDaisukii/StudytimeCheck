@@ -48,6 +48,11 @@ typedef struct usertime { //group ranking 때 필요한 구조체
 	double study_time;
 }usertime;
 
+typedef struct groupinfo {
+	char group_name[50];
+	int group_users;
+}groupinfo;
+
 DIR* login(); // login 성공: UID directory 포인터 return
 
 void main_screen();
@@ -70,8 +75,8 @@ void menu3_rank(WINDOW* win);
 
 void menu4(DIR*);
 void menu4_screen(WINDOW* win);
-void menu4_profile(WINDOW *win);
-void menu4_help(WINDOW *win);
+void menu4_profile(WINDOW* win);
+void menu4_help(WINDOW* win);
 void menu4_deleteAccount(WINDOW* win, DIR*);
 
 int rmdir_r(DIR* path);
@@ -180,9 +185,9 @@ DIR* login()
 		perror(s_user.group_ID);
 		exit(4);
 	}
-	if(user_exist == 0)
+	if (user_exist == 0)
 	{
-		if(chdir(NO_GROUP) == -1)
+		if (chdir(NO_GROUP) == -1)
 		{
 			if (mkdir(NO_GROUP, 0755) == -1 || chdir(NO_GROUP) == -1) // 없으면 만듦
 			{
@@ -450,7 +455,7 @@ void menu2()
 
 	char c;
 	while (1)
-	{	
+	{
 		menu2_screen(win);
 		c = wgetch(win);
 		if (c == 'q') break;
@@ -535,8 +540,8 @@ void day_stats(WINDOW* win, int year, int month, int day)
 	char statfile[256];
 
 	sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-	
-	
+
+
 	char UID_dir[256];
 	sprintf(UID_dir, "%s/%s", ".", UID);
 	mvwprintw(win, 6, 2, "%s", UID_dir);
@@ -554,14 +559,14 @@ void day_stats(WINDOW* win, int year, int month, int day)
 	}
 
 	srand(time(NULL));
-	timelog templog = {0, };
+	timelog templog = { 0, };
 	strcpy(templog.subject, "C Language");
 	templog.start_time = 0;
 	templog.finish_time = rand() % 10800 + 2;
 	templog.studytime = (double)templog.finish_time - templog.start_time;
 	write(fd1, &templog, sizeof(timelog));
 
-	timelog templog2 = {0, };
+	timelog templog2 = { 0, };
 	strcpy(templog2.subject, "System Programming");
 	templog2.start_time = 0;
 	templog2.finish_time = rand() % 10800 + 2;
@@ -589,7 +594,7 @@ void day_stats(WINDOW* win, int year, int month, int day)
 			mvwprintw(win, 9 + 3 * j, 3 + i, "%%");
 		j++;
 	}
-	
+
 	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
 
 	if (chdir("..") == -1)
@@ -608,7 +613,7 @@ void menu2_2(WINDOW* win)
 	// localtime은 static data구나
 	struct tm endweek_tm; localtime_r(&endweek, &endweek_tm);
 	struct tm startweek_tm; localtime_r(&startweek, &startweek_tm);
-	
+
 	// int today_year = endweek_tm->tm_year + 1900;
 	// int today_month = endweek_tm->tm_mon + 1;
 	// int today_day = endweek_tm->tm_mday;
@@ -654,11 +659,11 @@ void week_stats(WINDOW* win, time_t today)
 		perror("chdir");
 		exit(21);
 	}
-	
+
 	timelog weeklog[7];
 	int year, month, day;
 	double total = 0.0;
-	for(int week_i=6; week_i>=0; week_i--)
+	for (int week_i = 6; week_i >= 0; week_i--)
 	{
 		char statfile[15];
 		struct tm today_tm; localtime_r(&today, &today_tm);
@@ -666,17 +671,17 @@ void week_stats(WINDOW* win, time_t today)
 		month = today_tm.tm_mon + 1;
 		day = today_tm.tm_mday;
 		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-		
+
 		weeklog[week_i].studytime = 0.0;
 		int fd;
 		if ((fd = open(statfile, O_RDONLY)) == -1)
-		{	
-			mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, 0);
-			mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
+		{
+			mvwprintw(win, 8 + week_i * 3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, 0);
+			mvwprintw(win, 9 + week_i * 3, 2, "|----------------------------------------------------|");
 			today -= SECONDS_PER_DAY;
 			continue;
 		}
-	
+
 		timelog templog;
 		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
 		{
@@ -684,15 +689,15 @@ void week_stats(WINDOW* win, time_t today)
 			total += templog.studytime;
 		}
 		close(fd);
-		
-		mvwprintw(win, 8+week_i*3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, weeklog[week_i].studytime);
-		mvwprintw(win, 9+week_i*3, 2, "|----------------------------------------------------|");
+
+		mvwprintw(win, 8 + week_i * 3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, weeklog[week_i].studytime);
+		mvwprintw(win, 9 + week_i * 3, 2, "|----------------------------------------------------|");
 		for (int i = 0; i < weeklog[week_i].studytime / 1000; i++)
-			mvwprintw(win, 9+week_i*3, 3+i, "%%");
+			mvwprintw(win, 9 + week_i * 3, 3 + i, "%%");
 		today -= SECONDS_PER_DAY;
 	}
 	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
-	
+
 	if (chdir("..") == -1)
 	{
 		perror("chdir");
@@ -718,46 +723,46 @@ void menu2_3(WINDOW* win)
 		localtime_r(&statmonth, &statmonth_tm);
 		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
 		mvwprintw(win, 5, 20, "                       ");
-		switch(statmonth_tm.tm_mon + 1)
+		switch (statmonth_tm.tm_mon + 1)
 		{
-			case 1:
-				mvwprintw(win, 5, 2, "Studytime of January, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 2:
-				mvwprintw(win, 5, 2, "Studytime of February, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 3:
-				mvwprintw(win, 5, 2, "Studytime of March, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 4:
-				mvwprintw(win, 5, 2, "Studytime of April, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 5:
-				mvwprintw(win, 5, 2, "Studytime of May, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 6:
-				mvwprintw(win, 5, 2, "Studytime of June, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 7:
-				mvwprintw(win, 5, 2, "Studytime of July, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 8:
-				mvwprintw(win, 5, 2, "Studytime of August, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 9:
-				mvwprintw(win, 5, 2, "Studytime of September, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 10:
-				mvwprintw(win, 5, 2, "Studytime of October, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 11:
-				mvwprintw(win, 5, 2, "Studytime of November, %d", statmonth_tm.tm_year + 1900);
-				break;
-			case 12:
-				mvwprintw(win, 5, 2, "Studytime of December, %d", statmonth_tm.tm_year + 1900);
-				break;
+		case 1:
+			mvwprintw(win, 5, 2, "Studytime of January, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 2:
+			mvwprintw(win, 5, 2, "Studytime of February, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 3:
+			mvwprintw(win, 5, 2, "Studytime of March, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 4:
+			mvwprintw(win, 5, 2, "Studytime of April, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 5:
+			mvwprintw(win, 5, 2, "Studytime of May, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 6:
+			mvwprintw(win, 5, 2, "Studytime of June, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 7:
+			mvwprintw(win, 5, 2, "Studytime of July, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 8:
+			mvwprintw(win, 5, 2, "Studytime of August, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 9:
+			mvwprintw(win, 5, 2, "Studytime of September, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 10:
+			mvwprintw(win, 5, 2, "Studytime of October, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 11:
+			mvwprintw(win, 5, 2, "Studytime of November, %d", statmonth_tm.tm_year + 1900);
+			break;
+		case 12:
+			mvwprintw(win, 5, 2, "Studytime of December, %d", statmonth_tm.tm_year + 1900);
+			break;
 		}
-		
+
 		mvwprintw(win, 6, 2, "                         ");
 		mvwprintw(win, 10, 2, "                         ");
 		month_stats(win, statmonth_tm);
@@ -767,7 +772,7 @@ void menu2_3(WINDOW* win)
 		if (c == 'q') break;
 		if (c == ARROW_DOWN || c == ARROW_LEFT)
 		{
-			if(statmonth_tm.tm_mon > JANUARY) // 2월~12월
+			if (statmonth_tm.tm_mon > JANUARY) // 2월~12월
 				statmonth_tm.tm_mon--;
 			else // 1월
 			{
@@ -777,7 +782,7 @@ void menu2_3(WINDOW* win)
 		}
 		if (statmonth < today && (c == ARROW_UP || c == ARROW_RIGHT))
 		{
-			if(statmonth_tm.tm_mon < DECEMBER) // 1월~11월
+			if (statmonth_tm.tm_mon < DECEMBER) // 1월~11월
 				statmonth_tm.tm_mon++;
 			else // 12월
 			{
@@ -802,59 +807,59 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 		perror("chdir");
 		exit(21);
 	}
-	
+
 	// 구조체 배열은 static 한 건가?
-	timelog subjectlog[7] = {0, }; // 과목별 로그
+	timelog subjectlog[7] = { 0, }; // 과목별 로그
 	int year, month, day;
 	year = statmonth_tm.tm_year + 1900;
 	month = statmonth_tm.tm_mon + 1;
 	double total = 0.0;
 	int day_i, subject_count = 0;
-	
-	switch(month)
+
+	switch (month)
 	{
-		case 1:
-		case 3:
-		case 5:
-		case 7:
-		case 8:
-		case 10:
-		case 12:
-			day_i = 31;
-			break;
-		case 2:
-			day_i = 29;
-			break;
-		default:
-			day_i = 30;
+	case 1:
+	case 3:
+	case 5:
+	case 7:
+	case 8:
+	case 10:
+	case 12:
+		day_i = 31;
+		break;
+	case 2:
+		day_i = 29;
+		break;
+	default:
+		day_i = 30;
 	}
-	
-	for(; day_i>=1; day_i--)
+
+	for (; day_i >= 1; day_i--)
 	{
 		char statfile[15];
 		day = day_i;
 		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-		
-		memset(subjectlog[subject_count].subject, 0, sizeof(char)*30);
+
+		memset(subjectlog[subject_count].subject, 0, sizeof(char) * 30);
 		subjectlog[subject_count].studytime = 0.0;
 		int fd;
 		if ((fd = open(statfile, O_RDONLY)) == -1)
 			continue;
-	
+
 		timelog templog;
 		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
 		{
 			int subject_i;
 			total += templog.studytime;
-			for(subject_i=0; subject_i<subject_count; subject_i++)
+			for (subject_i = 0; subject_i < subject_count; subject_i++)
 			{
-				if(strcmp(subjectlog[subject_i].subject, templog.subject) == 0)
-				{	
+				if (strcmp(subjectlog[subject_i].subject, templog.subject) == 0)
+				{
 					subjectlog[subject_i].studytime += templog.studytime;
 					break;
 				}
 			}
-			if(subject_i != subject_count)
+			if (subject_i != subject_count)
 				continue;
 			strcpy(subjectlog[subject_count].subject, templog.subject);
 			subjectlog[subject_count++].studytime += templog.studytime;
@@ -862,15 +867,15 @@ void month_stats(WINDOW* win, struct tm statmonth_tm)
 		close(fd);
 	}
 	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds       ", total);
-	for(int subject_i = 0; subject_i<subject_count; subject_i++)
+	for (int subject_i = 0; subject_i < subject_count; subject_i++)
 	{
-		mvwprintw(win, 8+subject_i*3, 2, "%d. %s", subject_i+1, subjectlog[subject_i].subject);
-		mvwprintw(win, 9+subject_i*3, 2, "|------------------------------------- %7.0f seconds", subjectlog[subject_i].subject, subjectlog[subject_i].studytime);
+		mvwprintw(win, 8 + subject_i * 3, 2, "%d. %s", subject_i + 1, subjectlog[subject_i].subject);
+		mvwprintw(win, 9 + subject_i * 3, 2, "|------------------------------------- %7.0f seconds", subjectlog[subject_i].subject, subjectlog[subject_i].studytime);
 	}
 	for (int subject_i = 0; subject_i < subject_count; subject_i++)
-		for(int j = 0; j < subjectlog[subject_i].studytime / 5000; j++)
-			mvwprintw(win, 9+3*subject_i, 2+j, "%%");
-	
+		for (int j = 0; j < subjectlog[subject_i].studytime / 5000; j++)
+			mvwprintw(win, 9 + 3 * subject_i, 2 + j, "%%");
+
 	if (chdir("..") == -1)
 	{
 		perror("chdir");
@@ -1025,9 +1030,22 @@ void menu3_create(WINDOW* win) {
 					lseek(fd2, 0, SEEK_END);
 					write(fd2, &add, sizeof(groupinfo));
 				}
-
-
 			}
+			// users.txt 파일에 바뀐 group 정보 replace
+			int ufd = usersFd;
+			int read_st = 0;
+			Studyuser j_user;
+
+			lseek(ufd, 0, SEEK_SET);
+			while (read(ufd, &j_user, sizeof(Studyuser))) {
+				if (strcmp(j_user.user_ID, user) == 0) {
+					strcpy(j_user.group_ID, groupid); // GROUP ID is copy to j_user
+					lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
+					write(ufd, &j_user, sizeof(Studyuser)); // replacing
+					wrefresh(win);
+				}
+			}
+			// fd 닫아주기
 			close(fd1);
 			close(fd2);
 
@@ -1035,11 +1053,7 @@ void menu3_create(WINDOW* win) {
 			mvwprintw(win, 5, 2, "You have CREATE and JOIN <%s> !!!", groupid);
 			mvwprintw(win, 7, 2, "If you want to go BACK, press 'q' !");
 			wrefresh(win);
-
-
 		}
-
-
 	}
 
 	char menu;
@@ -1056,98 +1070,217 @@ void menu3_join(WINDOW* win) {
 	wclear(win);
 	box(win, '|', '-');
 	wrefresh(win);
-
 	echo();
-	int user_flag = 0;
-	char* groupid = malloc(sizeof(char*) * MAX);
-	char* userid = malloc(sizeof(char*) * MAX);
 
-	mvwprintw(win, 3, 2, "Insert your USER ID : ");
-	mvwgetstr(win, 3, 24, userid);
-	//If the user has a group id, should we tell users to leave the group and rejoin to another group?
-	mvwprintw(win, 6, 2, "Enter the GROUP ID that you want to join : ");
-	mvwgetstr(win, 6, 45, groupid);
+	// 사용자 이름 복사
+	char user[30] = { 0 };
+	strcpy(user, UID);
 
-	// ./users/no_group에 있던 userid 디렉토리 있는지 검사
-	int user_dir = 0;
-	char* no_dir = "./users/no_group";
-	DIR* noDir = opendir(no_dir);
-	if (noDir != NULL) {
-		struct dirent* no_entry;
-		while ((no_entry = readdir(noDir)) != NULL) {
-			if (no_entry->d_type == DT_DIR && strcmp(no_entry->d_name, userid) == 0) {
-				user_dir = 1; // found user dir
-			}
-			else { // user dir not found
-				// userid 디렉토리가 없다면, userid 확인하라고 에러 메세지 띄움
-				mvwprintw(win, 8, 2, "Check your USER ID or you already have a GROUP !");
-			}
-		}
+	// 들어갈 그룹 이름 받기
+	char* groupid = malloc(sizeof(char*) * 30);
+	mvwprintw(win, 3, 2, "Enter GROUP ID that you want to join : ");
+	mvwgetstr(win, 3, 42, groupid);
+	wrefresh(win);
+
+	// 현재 경로 ==  ./users
+
+	// ./users로 디렉토리 경로 변경
+	if (chdir("..") != 0) {
+		perror("chdir");
+		return;
 	}
-	// userid 디렉토리가 있다면, users 디렉토리에 groupid 디렉토리가 있는지 검사
-	int group_dir = 0;
-	char* g_dir = malloc(sizeof(char*) * 40); //to save groupid path
-	strcpy(g_dir, no_dir);
-	strcat(g_dir, "/");
-	strcat(g_dir, userid); // making groupid path
 
-	if (user_dir == 1) { // no_group에 user 디렉토리가 있다면
-		DIR* gDir = opendir(g_dir);
-		if (gDir != NULL) {
-			struct dirent* g_entry;
-			while ((g_entry = readdir(gDir)) != NULL) {
-				if (g_entry->d_type = DT_DIR && strcmp(g_entry->d_name, groupid) == 0) {
-					group_dir = 1;
-				}
+	// ./users/no_group 안에 사용자가 있는지 -> 사용자가 아무 그룹에 속하지 않은 상태
+	int user_flag = 0; // ./users 안에 생성된 그룹들이랑 같은지 표시하는 flag
+	DIR* u_dir = opendir("./no_group");
+	struct dirent* u_ent;
+	if (u_dir != NULL) {
+		while ((u_ent = readdir(u_dir)) != NULL) {
+			if (u_ent->d_type == DT_DIR && strcmp(u_ent->d_name, user) == 0) {
+				user_flag = 1; // no_group안에 사용자가 있음
 			}
 		}
-
 	}
-	// groupid 디렉토리가 없다면 , group 디렉토리를 생성하고 userid 디렉토리 옮김
-	// -> group_dir == 0 && user_dir == 1
-	if (group_dir == 0 && user_dir == 1) {
+	closedir(u_dir);
 
-	}
-	// groupid 디렉토리가 있다면 , 그 groupid 디렉토리 안으로 userid 디렉토리 옮김
-	// -> group_dir == 1 && user_dir == 1
-	else if (group_dir == 1 && user_dir == 1) {
+	// 사용자는 그룹에 속한 상황
+	if (user_flag == 0) {
+		mvwprintw(win, 5, 2, "You ALREADY have a GROUP !!!");
+		mvwprintw(win, 6, 2, "LEAVE group first then try again !");
+		mvwprintw(win, 8, 2, "Returning to group menu...");
+		wrefresh(win);
 
-	}
-
-	int ufd = usersFd;
-	int read_st = 0;
-	Studyuser j_user;
-
-	lseek(ufd, 0, SEEK_SET);
-	while (read(ufd, &j_user, sizeof(Studyuser))) {
-		if (strcmp(j_user.user_ID, userid) == 0) {
-			user_flag = 1; // userid is found
-			strcpy(j_user.group_ID, groupid); // GROUP ID is copy to j_user
-			lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
-			write(ufd, &j_user, sizeof(Studyuser)); // replacing
+		for (int t = 1; t <= 3; t++) {
+			sleep(1);
+			int y = 5 * t - 2;
+			mvwprintw(win, 9, y, " %d ...", 4 - t);
 			wrefresh(win);
 		}
+		sleep(1);
+		wclear(win);
+		return;
 	}
-	if (user_flag == 1) {
-		mvwprintw(win, 8, 2, "You join in to <%s> !", groupid);
-		mvwprintw(win, 9, 2, "If you want to go back, press 'q' !");
+
+	// ./users 안에 같은 그룹이 있는지 검사
+	int group_flag = 0; // ./users 안에 생성된 그룹들이랑 같은지 표시하는 flag
+	DIR* users_dir = opendir(".");
+	struct dirent* ent;
+	if (users_dir != NULL) {
+		while ((ent = readdir(users_dir)) != NULL) {
+			if (ent->d_type == DT_DIR && strcmp(ent->d_name, groupid) == 0) {
+				group_flag = 1; // 이미 생성된 그룹 발견
+			}
+		}
+	}
+	closedir(users_dir);
+
+	// users.txt 파일에 사용자 그룹 정보랑 일치하는지 확인
+	// users.txt는 열려있음. users.txt의 fd를 ufd에 저장
+	int ufd = usersFd;
+
+	// 정보 읽을 구조체 선언
+	Studyuser j_user;
+
+	// 유저가 속한 그룹과 join하려는 그룹과 다른지 저장하는 flag
+	int group_cmp = 0;
+
+	// 커서 맨 앞으로 돌리고 구조체 단위로 정보 읽어가며 user_name 찾기
+	lseek(ufd, 0, SEEK_SET);
+	while (read(ufd, &j_user, sizeof(Studyuser))) {
+		// 파일에서 유저 찾기
+		if (strcmp(j_user.user_ID, user) == 0) {
+			// 유저의 그룹이랑 join하려는 그룹이랑 같음
+			if (strcmp(j_user.group_ID, NO_GROUP) == 0) {
+				group_cmp = 1;
+			}
+		}
+	}
+	// 이미 생성된 그룹 + 지금과 다른 그룹에 들어가고자 함
+	if (group_flag == 1 && group_cmp == 1) {
+
+		// oldpath 경로 만들기
+		char old_path[50] = { 0 };
+		strcpy(old_path, "./no_group/");
+		strcat(old_path, user);
+
+		// newpath 경로 만들기
+		char new_path[50] = { 0 };
+		strcpy(new_path, "./");
+		strcat(new_path, groupid);
+		strcat(new_path, "/");
+		strcat(new_path, user);
+
+		int fd2;
+		// group.txt 파일 오픈
+		fd2 = open("group.txt", O_RDWR | O_APPEND);
+
+		// 파일을 구조체 단위로 읽고 그룹 이름이 중복되는 것이 있는지 검사
+		int isgroup = 0;
+		lseek(fd2, 0, SEEK_SET);
+
+		// 읽을 구조체 선언하기
+		groupinfo rd;
+		int down_ten = 0;
+		while (read(fd2, &rd, sizeof(groupinfo))) {
+			// group.txt에 그룹 찾기
+			if (strcmp(rd.group_name, groupid) == 0) {
+				// 그룹 제한 10명 검사
+				if (rd.group_users <= 9) {
+					// 한명 더 늘리기
+					rd.group_users += 1;
+					lseek(fd2, -sizeof(Studyuser), SEEK_CUR);
+					write(fd2, &rd, sizeof(Studyuser));
+					down_ten = 1;
+					break;
+				}
+				else {
+					// 사용자에게 그룹이 없다고 말하기
+					// 메뉴 돌아가기
+				}
+
+			}
+			close(fd2);
+		}
+		// 그룹에 10이하이면
+		if (down_ten == 1) {
+			// 현재 경로 ./users
+			// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
+
+			// 디렉토리 경로 바꾸기 실패
+			if (rename(old_path, new_path) != 0) {
+				perror("rename");
+				return;
+			}
+			// 디렉토리 경로 바꾸기 성공
+			else {
+
+				// users.txt 파일 변경
+				int ufd = usersFd;
+				int read_st = 0;
+				Studyuser j_user;
+
+				lseek(ufd, 0, SEEK_SET);
+				while (read(ufd, &j_user, sizeof(Studyuser))) {
+					if (strcmp(j_user.user_ID, user) == 0) {
+						strcpy(j_user.group_ID, groupid); // GROUP ID is copy to j_user
+						lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
+						write(ufd, &j_user, sizeof(Studyuser)); // replacing
+						wrefresh(win);
+					}
+				}
+
+				mvwprintw(win, 5, 2, "You have JOIN <%s> !!!", groupid);
+				mvwprintw(win, 7, 2, "If you want to go BACK, press 'q' !");
+				wrefresh(win);
+			}
+		}
+
+	}
+	// ./users 경로에 그룹 디렉토리가 없어 생성해야함
+	if (group_flag == 0) {
+		// 사용자에게 돌아가서 create 하라고 하기
+		mvwprintw(win, 5, 2, "Go back and CREATE group <%s> !!!", groupid);
+		mvwprintw(win, 7, 2, "Returning to group menu...");
 		wrefresh(win);
+
+		for (int t = 1; t <= 3; t++) {
+			sleep(1);
+			int y = 5 * t - 2;
+			mvwprintw(win, 9, y, " %d ...", 4 - t);
+			wrefresh(win);
+		}
+		sleep(1);
+		wclear(win);
+		return;
 	}
-	else {
-		mvwprintw(win, 8, 2, "There is NO USER ID !!!!");
+	if (group_cmp == 0) {
+		// 사용자가 no_group에 속하지 않음 == 이미 그룹이 있음
+		mvwprintw(win, 5, 2, "You ALREADY have a GROUP !!!");
+		mvwprintw(win, 6, 2, "LEAVE group first then try again !");
+		mvwprintw(win, 8, 2, "Returning to group menu...");
 		wrefresh(win);
+
+		for (int t = 1; t <= 3; t++) {
+			sleep(1);
+			int y = 5 * t - 2;
+			mvwprintw(win, 9, y, " %d ...", 4 - t);
+			wrefresh(win);
+		}
+		sleep(1);
+		wclear(win);
+		return;
 	}
+
 
 	char menu;
 	while ((menu = getch()) != 'q');
 
 	free(groupid);
-	free(userid);
 	wclear(win);
 	wrefresh(win);
 	return;
-}
 
+}
 void menu3_leave(WINDOW* win) {
 
 	wclear(win);
@@ -1354,12 +1487,12 @@ void menu3_rank(WINDOW* win) {
 		for (int n = 0; n < i; n++) {
 			mvwprintw(win, x, y, "%d.\t%s\t%lf", n + 1, rank[n].user_name, rank[n].study_time);
 			if (strcmp(rank[n].user_name, userid) == 0) {
-				mvwprintw(win, x,30, "<-");
+				mvwprintw(win, x, 30, "<-");
 			}
 			x++;
 			wrefresh(win);
 		}
-		
+
 	}
 
 	char menu;
@@ -1567,31 +1700,31 @@ void menu4_profile(WINDOW* win)
 	mvwprintw(win, 13, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
 	mvwprintw(win, 13, 59, "|");
 	mvwprintw(win, 30, 2, "%s", "\'q\' to quit");
-	
+
 	wrefresh(win);
 
 	char quit = '0';
 	while ((quit = wgetch(win)) != 'q'); // q 누르면 나가기
-	
+
 	wclear(win);
 	wrefresh(win);
 
 	return;
 }
 
-void menu4_help(WINDOW *win)
+void menu4_help(WINDOW* win)
 {
 	def_prog_mode();
 	endwin();
-	
+
 	pid_t pid;
-	if((pid = fork()) == -1)
+	if ((pid = fork()) == -1)
 	{
 		perror("fork");
 		exit(40);
 	}
-	
-	if(pid == 0) // child
+
+	if (pid == 0) // child
 	{
 		execlp("view", "view", "../../README", NULL);
 		perror("execlp");
