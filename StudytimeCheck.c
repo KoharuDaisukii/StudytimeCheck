@@ -1293,117 +1293,185 @@ void menu3_leave(WINDOW* win) {
 	char user[30] = { 0 };
 	strcpy(user, UID);
 
-	// users.txt 에서 사용자 찾고 groupid 가져오기
-	int ufd = usersFd;
-	int isgroup = 0;
-	char groupid[30] = { 0 };
+	// 사용자에게 그룹 떠나는 여부 물어보기
+	char yn;
+	mvwprintw(win, 3, 2, "Do you want to LEAVE this group ? (y/n) : ");
+	yn = mvwgetch(win, 3, 44);
+	wrefresh(win);
 
-	Studyuser j_user;
+	sleep(1);
 
-	lseek(ufd, 0, SEEK_SET);
-	while (read(ufd, &j_user, sizeof(Studyuser))) {
-		if (strcmp(j_user.user_ID, user) == 0) {
-			strcpy(groupid, j_user.group_ID); // GROUP ID copy
-			isgroup = 1;
-			break;
-		}
-	}
-	// users.txt에 사용자가 있을 때
-	if (isgroup == 1) {
-		// 이미 사용자는 어떤 그룹에 속하지 않음
-		if (strcmp(groupid, NO_GROUP) == 0) {
-			// 이미 속하지 않았다고 사용자한테 말하기
-			// 메뉴로 돌아가기
-		}
-		// 사용자는 그룹에 속함
-		else {
+	// 사용자가 그룹을 떠난다고 했을 때
+	if (yn == 'y') {
 
-			// users.txt 변경 정보 적용
-			Studyuser r_user;
+		// users.txt 에서 사용자 찾고 groupid 가져오기
+		int ufd = usersFd;
+		int isgroup = 0;
+		char groupid[30] = { 0 };
 
-			lseek(ufd, 0, SEEK_SET);
-			while (read(ufd, &r_user, sizeof(Studyuser))) {
-				if (strcmp(r_user.user_ID, user) == 0) {
-					// 사용자 그룹 탈퇴 -> group id : no_group
-					strcpy(r_user.group_ID, NO_GROUP); // GROUP ID copy
-					lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
-					// 사용자 변경 정보 덮어쓰기
-					write(ufd, &r_user, sizeof(Studyuser));
-				}
+		Studyuser j_user;
+
+		lseek(ufd, 0, SEEK_SET);
+		while (read(ufd, &j_user, sizeof(Studyuser))) {
+			if (strcmp(j_user.user_ID, user) == 0) {
+				strcpy(groupid, j_user.group_ID); // GROUP ID copy
+				isgroup = 1;
+				break;
 			}
+		}
+		// users.txt에 사용자가 있을 때
+		if (isgroup == 1) {
+			// 이미 사용자는 어떤 그룹에 속하지 않음
+			if (strcmp(groupid, NO_GROUP) == 0) {
+				// 이미 속하지 않았다고 사용자한테 말하기
+				// 메뉴로 돌아가기
+				mvwprintw(win, 5, 2, "You ALREADY don't have a GROUP !!!");
+				mvwprintw(win, 6, 2, "CREATE of JOIN a group first then try again !");
+				mvwprintw(win, 8, 2, "Returning to group menu...");
+				wrefresh(win);
 
-			// group.txt 변경하기
-			int fd2;
-			// group.txt 파일 오픈
-			fd2 = open("group.txt", O_RDWR | O_APPEND);
-
-			if (fd2 != -1) {
-				// 파일을 구조체 단위로 읽고 그룹 이름이 중복되는 것이 있는지 검사
-				int isgroup = 0;
-				lseek(fd2, 0, SEEK_SET);
-
-				// 읽을 구조체 선언하기
-				groupinfo rd;
-				int no_one = 0;
-				while (read(fd2, &rd, sizeof(groupinfo))) {
-					// group.txt에 그룹 찾기
-					if (strcmp(rd.group_name, groupid) == 0) {
-						// 그룹 제한 10명 검사 (남은 인원이 한명이 아닐 때)
-						if (rd.group_users != 1) {
-							// 한명 줄이기
-							rd.group_users -= 1;
-							lseek(fd2, -sizeof(Studyuser), SEEK_CUR);
-							write(fd2, &rd, sizeof(Studyuser));
-							break;
-						}
-						// 사용자 1명 밖에 안남았을 때
-						else {
-							no_one = 1;
-							//group.txt에서 그 그룹 정보 지우기
-							// 지우는데 중간에서 지우면 공백은 어떡하지 ??
-						}
-
-					}
+				for (int t = 1; t <= 3; t++) {
+					sleep(1);
+					int y = 5 * t - 1;
+					mvwprintw(win, 10, y, " %d ...", 4 - t);
+					wrefresh(win);
 				}
-			}
-			close(fd2);
-			else {
-				perror("open");
+				sleep(1);
 				wclear(win);
 				return;
 			}
-
-			// ./users/groupid/user_name 경로를 ./users/no_group/user_name으로 변경
-
-			// newpath 경로 만들기
-			char new_path[50] = { 0 };
-			strcpy(old_path, "./no_group/");
-			strcat(old_path, user);
-
-			// oldpath 경로 만들기
-			char old_path[50] = { 0 };
-			strcpy(new_path, "./");
-			strcat(new_path, groupid);
-			strcat(new_path, "/");
-			strcat(new_path, user);
-
-			// 현재 경로 ./users
-			// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
-
-			// 디렉토리 경로 바꾸기 실패
-			if (rename(old_path, new_path) != 0) {
-				perror("rename");
-				return;
-			}
+			// 사용자는 그룹에 속함
 			else {
-				// 경로 잘 바꾸어짐
+
+				// users.txt 변경 정보 적용
+				Studyuser r_user;
+
+				lseek(ufd, 0, SEEK_SET);
+				while (read(ufd, &r_user, sizeof(Studyuser))) {
+					if (strcmp(r_user.user_ID, user) == 0) {
+						// 사용자 그룹 탈퇴 -> group id : no_group
+						strcpy(r_user.group_ID, NO_GROUP); // GROUP ID copy
+						lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
+						// 사용자 변경 정보 덮어쓰기
+						write(ufd, &r_user, sizeof(Studyuser));
+					}
+				}
+				// 현재 작업 경로 확인
+				char path[50];
+				getcwd(path, 50);
+				mvwprintw(win, 5, 2, "path : %s", path);
+				wrefresh(win);
+
+				sleep(3);
+
+				// group.txt 변경하기
+				int fd2;
+				// group.txt 파일 오픈
+				fd2 = open("group.txt", O_RDWR | O_APPEND);
+
+				if (fd2 != -1) {
+					// 파일을 구조체 단위로 읽고 그룹 이름이 중복되는 것이 있는지 검사
+					int isgroup = 0;
+					lseek(fd2, 0, SEEK_SET);
+
+					// 읽을 구조체 선언하기
+					groupinfo rd;
+					int no_one = 0;
+					while (read(fd2, &rd, sizeof(groupinfo))) {
+						// group.txt에 그룹 찾기
+						if (strcmp(rd.group_name, groupid) == 0) {
+							// 그룹 제한 10명 검사 (남은 인원이 한명이 아닐 때)
+							if (rd.group_users != 1) {
+								// 한명 줄이기
+								rd.group_users -= 1;
+								lseek(fd2, -sizeof(groupinfo), SEEK_CUR);
+								write(fd2, &rd, sizeof(groupinfo));
+								break;
+							}
+							// 사용자 1명 밖에 안남았을 때
+							else {
+								no_one = 1; // 그룹의 인원이 1명 즉 사용자 밖에 남지 않았을 때
+								//group.txt에서 그 그룹 정보 지우기
+								// 구조체 초기화 
+								memset(&rd, 0, sizeof(groupinfo));
+								lseek(fd2, -sizeof(groupinfo), SEEK_CUR);
+								write(fd2, &rd, sizeof(groupinfo));
+							}
+
+						}
+					}
+
+					// ./users/groupid/user_name 경로를 ./users/no_group/user_name으로 변경
+
+					// newpath 경로 만들기
+					char new_path[50] = { 0 };
+					strcpy(new_path, "./no_group/");
+					strcat(new_path, user);
+
+					// oldpath 경로 만들기
+					char old_path[50] = { 0 };
+					strcpy(old_path, "./");
+					strcat(old_path, groupid);
+					strcat(old_path, "/");
+					strcat(old_path, user);
+
+					// 현재 경로 ./users
+					// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
+
+					// 디렉토리 경로 바꾸기 실패
+					if (rename(old_path, new_path) != 0) {
+						perror("rename");
+						return;
+					}
+					else {
+						// 경로 잘 바꾸어짐
+						mvwprintw(win, 5, 2, "You left the GROUP !!!");
+						mvwprintw(win, 7, 2, "Returning to group menu...");
+						wrefresh(win);
+
+						for (int t = 1; t <= 3; t++) {
+							sleep(1);
+							int y = 5 * t - 1;
+							mvwprintw(win, 9, y, " %d ...", 4 - t);
+							wrefresh(win);
+						}
+						sleep(1);
+						wclear(win);
+						return;
+					}
+
+					// 실행 안되면 getcwd로 경로 확인하면서 해결하기
+				}
+				// group.txt 파일을 열지 못할 경우
+				else {
+					perror("open");
+					wclear(win);
+					sleep(3);
+					return;
+				}
+				close(fd2);
 			}
 
-			// 실행 안되면 getcwd로 경로 확인하면서 해결하기
 		}
 
 	}
+	// 사용자가 그룹을 떠나지 않는다고 했을 때
+	else if (yn == 'n')
+	{
+		mvwprintw(win, 5, 2, "You choose to NOT LEAVE this group !!!");
+		mvwprintw(win, 7, 2, "Returning to group menu...");
+		wrefresh(win);
 
+		for (int t = 1; t <= 3; t++) {
+			sleep(1);
+			int y = 5 * t - 1;
+			mvwprintw(win, 9, y, " %d ...", 4 - t);
+			wrefresh(win);
+		}
+		sleep(1);
+		wclear(win);
+		return;
+	}
 
 	char menu;
 	while ((menu = getch()) != 'q');
