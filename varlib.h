@@ -35,7 +35,7 @@ typedef struct groupinfo {
 }groupinfo;
 
 void ID_check(int argc, char* argv[]);
-DIR* login(int argc, char* argv[]);
+void login(int argc, char* argv[]);
 void initial_set();
 void unsetup();
 void set_forFirstRun();

@@ -16,12 +16,18 @@
 int usersFd;
 char UID[11];
 
-DIR* login(int argc, char* argv[])
+void login(int argc, char* argv[])
 {
 	ID_check(argc, argv);
-	initial_set();
-	strcpy(UID, argv[1]);	
+	set_forFirstRun();
+	strcpy(UID, argv[1]); 	
 	DIR* dir_ptr;
+	
+	if ((usersFd = open(USERS_INFO_FILE, O_RDWR)) == -1)
+	{
+		perror("open fd2");
+		exit(9);
+	}
 	
 	int user_exist = 0;
 	Studyuser s_user;
@@ -45,8 +51,8 @@ DIR* login(int argc, char* argv[])
 			exit(4);
 		}
 	}
-	// 한글 ID 입력하면 컷하는 기능도 필요할 듯
-	if ((dir_ptr = opendir(UID)) == NULL || user_exist == 0) // UID 폴더 존재하는 지 확인, 그룹 생각 안 하고 일단 함
+
+	if ((dir_ptr = opendir(UID)) == NULL || user_exist == 0) 
 	{
 		printf("ID가 존재하지 않습니다. 해당 ID로 가입하시겠습니까? (Y/N): ");
 		char yesno = toupper(getchar());
@@ -81,11 +87,12 @@ DIR* login(int argc, char* argv[])
 
 			printf("가입 완료되었습니다. %s님 환영합니다.\n", UID);
 			sleep(2); // 로딩하는 척
-			return dir_ptr;
+			return;
 		}
 		else
 		{
 			printf("\'가입하지 않기\'를 선택하셨습니다. 프로그램이 종료됩니다.\n");
+			unsetup();
 			sleep(2);
 			exit(0);
 		}
@@ -96,8 +103,8 @@ DIR* login(int argc, char* argv[])
 	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
 	write(usersFd, &s_user, sizeof(Studyuser));
 	// 추가 완료
-
-	return dir_ptr;
+	closedir(dir_ptr);
+	return;
 }
 
 void ID_check(int argc, char* argv[])
@@ -122,7 +129,7 @@ void ID_check(int argc, char* argv[])
 	{
 		if(!isalnum(argv[1][i])) // 알파벳이나 숫자가 아니면
 		{
-			fprintf(stderr, "아이디는 알파벳이나 숫자만 입력 가능합니다.");
+			fprintf(stderr, "아이디는 알파벳이나 숫자만 입력 가능합니다.\n");
 			exit(4);
 		}
 	}
@@ -131,15 +138,9 @@ void ID_check(int argc, char* argv[])
 
 void initial_set()
 {
-	set_forFirstRun();
 	initscr();
 	noecho();
 	curs_set(0);
-	if ((usersFd = open(USERS_INFO_FILE, O_RDWR)) == -1)
-	{
-		perror("open fd2");
-		exit(9);
-	}
 }
 
 void set_forFirstRun()
