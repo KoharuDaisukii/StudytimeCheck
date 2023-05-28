@@ -26,7 +26,7 @@ typedef struct groupinfo {
 	int group_users;
 }groupinfo;
 
-void main_screen(int arrow_select);
+void main_screen(WINDOW* win, int arrow_select);
 void menu2();
 void menu2_1(WINDOW* win);
 void menu2_2(WINDOW* win);
@@ -51,14 +51,15 @@ char UID[11];
 int main(int argc, char* argv[])
 {
 	login(argc, argv);
-	initial_set();
+	WINDOW* main_win = initial_set();
 	
 	int key_input;
 	int arrow_select = 1;
 	while (1)
 	{
-		main_screen(arrow_select);
-		key_input = getch();
+		main_screen(main_win, arrow_select);
+		wrefresh(main_win);
+		key_input = wgetch(main_win);
 		arrow_select = arrow_convert(key_input, arrow_select, 5);
 		// if(key_input == '1' || (key_input == '\n' && arrow_select == 1)) menu1();
 		if (key_input == '2' || (key_input == '\n' && arrow_select == 2)) menu2();
@@ -95,12 +96,12 @@ int arrow_convert(int key_select, int arrow_select, int bound)
 	return arrow_select;
 }
 
-void main_screen(int arrow_select)
+void main_screen(WINDOW* win, int arrow_select)
 {
 	int x = 3;
-	int  y = 7;
-
-	//S
+	int  y = 0;
+	
+	
 	move(y, x);
 	printw("*");
 	move(y, x + 1);
@@ -276,17 +277,15 @@ void main_screen(int arrow_select)
 	printw("*");
 
 	//M
-
 	
-	move(x, y + 40);
-	printw("Welcome! %s!", UID);
-	mvwprintw_standout(stdscr, x + 1, y + 40, "1. Studytime Measuring", 1, arrow_select);
-	mvwprintw_standout(stdscr, x + 2, y + 40, "2. Display stats", 2, arrow_select);
-	mvwprintw_standout(stdscr, x + 3, y + 40, "3. Group", 3, arrow_select);
-	mvwprintw_standout(stdscr, x + 4, y + 40, "4. Settings", 4, arrow_select);
-	mvwprintw_standout(stdscr, x + 5, y + 40, "5. Exit", 5, arrow_select);
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
+	mvwprintw_standout(win, 15, 2, "1. Studytime Measuring", 1, arrow_select);
+	mvwprintw_standout(win, 17, 2, "2. Display stats", 2, arrow_select);
+	mvwprintw_standout(win, 19, 2, "3. Group", 3, arrow_select);
+	mvwprintw_standout(win, 21, 2, "4. Settings", 4, arrow_select);
+	mvwprintw_standout(win, 23, 2, "5. Exit", 5, arrow_select);
 	
-	refresh();
+	wrefresh(win);
 }
 
 void mvwprintw_standout(WINDOW* win, int y, int x, char* str, int line_num, int select)
@@ -295,6 +294,13 @@ void mvwprintw_standout(WINDOW* win, int y, int x, char* str, int line_num, int 
 		wstandout(win);
 	mvwprintw(win, y, x, "%s", str);
 	wstandend(win);
+}
+
+void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
+{
+	for(int i=y1; i<=y2; i++)
+		for(int j=x1; j<=x2; j++)
+			mvwprintw(win, i, j, "%s", ch);
 }
 
 void menu2()
@@ -312,26 +318,15 @@ void menu2_1(WINDOW* win)
 	daystats(win);
 }
 
-void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
-{
-	for(int i=y1; i<=y2; i++)
-		for(int j=x1; j<=x2; j++)
-			mvwprintw(win, i, j, "%s", ch);
-}
-
 void menu2_2(WINDOW* win)
 {
 	weekstats(win);
 }
 
-
-
 void menu2_3(WINDOW* win)
 {
 	monthstats(win);
 }
-
-
 
 void menu3() {
 	//initscr();
@@ -359,7 +354,7 @@ void menu3() {
 void menu3_create(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 
 	echo();
@@ -518,7 +513,7 @@ void menu3_create(WINDOW* win) {
 void menu3_join(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 	echo();
 
@@ -732,7 +727,7 @@ void menu3_join(WINDOW* win) {
 void menu3_leave(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 
 	echo();
@@ -933,7 +928,7 @@ void menu3_leave(WINDOW* win) {
 void menu3_rank(WINDOW* win) {
 
 	wclear(win);
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 
 	echo();
@@ -1086,7 +1081,7 @@ void menu3_screen(WINDOW* win) {
 	int x = 3;
 	int y = 7;
 
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 
 	//G
 	mvwprintw(win, x, y, "*");
