@@ -1,15 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h> 
-#include <string.h> // strlen
-#include <ctype.h> // toupper, isalpha, isdigit
-#include <sys/stat.h> // mkdir
-#include <sys/types.h> // mkdir, lseek
-#include <sys/wait.h> // wait
-#include <fcntl.h> // open
-#include <dirent.h> // struct dirent
-#include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
+#include <string.h>
+#include <ctype.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <curses.h>
-#include <time.h> // time, struct tm
+#include <time.h>
 #include "studytimecheck.h"
 #include "varlib.h"
 
@@ -27,23 +23,24 @@ void settings_select(WINDOW* win)
 	{
 		settings_screen(win, arrow_select);
 		c = wgetch(win);
-		arrow_select = arrow_convert(c, arrow_select, 3);
+		arrow_select = arrow_convert(c, arrow_select, 4);
 		if (c == 'q') break;
 		if (c == '1' || (c == '\n' && arrow_select == 1)) menu4_1(win);
 		if (c == '2' || (c == '\n' && arrow_select == 2)) menu4_2(win);
-		if (c == '3' || (c == '\n' && arrow_select == 3)) menu4_3(win); // 3 누르면 계정 삭제할지 말지 선택
+		if (c == '3' || (c == '\n' && arrow_select == 3)) menu4_3(win); 
+		if (c == '4' || (c == '\n' && arrow_select == 4)) break;
 		if (user_dead == 1) break;
 	}
 }
 
 void settings_screen(WINDOW* win, int arrow_select)
 {
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	mvwprintw(win, 3, 2, "Settings");
 	mvwprintw_standout(win, 6, 2, "1. My profile", 1, arrow_select);
 	mvwprintw_standout(win, 8, 2, "2. help", 2, arrow_select);
 	mvwprintw_standout(win, 10, 2, "3. Delete account", 3, arrow_select);
-	mvwprintw(win, 30, 2, "\'q\' to quit");
+	mvwprintw_standout(win, 12, 2, "4. Go Back", 4, arrow_select);
 	wrefresh(win);
 }
 
@@ -66,7 +63,7 @@ void display_profile(WINDOW* win)
 	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
 	mvwprintw(win, 13, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
 	mvwprintw(win, 30, 2, "%s", "\'q\' to quit");
-	box(win, '|', '-');
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 	
 	char quit = '0';
