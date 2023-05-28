@@ -1,0 +1,189 @@
+#include <stdio.h>
+#include <stdlib.h> 
+#include <string.h> // strlen
+#include <ctype.h> // toupper, isalpha, isdigit
+#include <sys/stat.h> // mkdir
+#include <sys/types.h> // mkdir, lseek
+#include <sys/wait.h> // wait
+#include <fcntl.h> // open
+#include <dirent.h> // struct dirent
+#include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
+#include <curses.h>
+#include <time.h> // time, struct tm
+#include "studytimecheck.h"
+#include "varlib.h"
+
+int usersFd;
+
+void menu4_1(WINDOW* win);
+void menu4_2(WINDOW* win);
+void menu4_3(WINDOW* win);
+
+void settings_select(WINDOW* win)
+{
+	int c;
+	int arrow_select = 1;
+	while (1)
+	{
+		settings_screen(win, arrow_select);
+		c = wgetch(win);
+		arrow_select = arrow_convert(c, arrow_select, 3);
+		if (c == 'q') break;
+		if (c == '1' || (c == '\n' && arrow_select == 1)) menu4_1(win);
+		if (c == '2' || (c == '\n' && arrow_select == 2)) menu4_2(win);
+		if (c == '3' || (c == '\n' && arrow_select == 3)) menu4_3(win); // 3 누르면 계정 삭제할지 말지 선택
+		if (user_dead == 1) break;
+	}
+}
+
+void settings_screen(WINDOW* win, int arrow_select)
+{
+	box(win, '|', '-');
+	mvwprintw(win, 3, 2, "Settings");
+	mvwprintw_standout(win, 6, 2, "1. My profile", 1, arrow_select);
+	mvwprintw_standout(win, 8, 2, "2. help", 2, arrow_select);
+	mvwprintw_standout(win, 10, 2, "3. Delete account", 3, arrow_select);
+	mvwprintw(win, 30, 2, "\'q\' to quit");
+	wrefresh(win);
+}
+
+void display_profile(WINDOW* win)
+{
+	int ufd = usersFd;
+	Studyuser s_user; // 내 정보 읽어오기
+	lseek(ufd, -sizeof(Studyuser), SEEK_CUR);
+	read(ufd, &s_user, sizeof(Studyuser));
+
+	struct tm* tm_ptr;
+	wfill(win, 3, 2, 30, 59, " ");
+	mvwprintw(win, 3, 2, "Settings - %s\'s profile", s_user.user_ID);
+	mvwprintw(win, 6, 2, "User ID: %s", s_user.user_ID);
+	mvwprintw(win, 8, 2, "Group ID: %s", s_user.group_ID);
+
+	tm_ptr = localtime(&(s_user.signup)); // time_t-> struct tm
+
+	mvwprintw(win, 11, 2, "Sign up time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
+	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
+	mvwprintw(win, 13, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
+	mvwprintw(win, 30, 2, "%s", "\'q\' to quit");
+	box(win, '|', '-');
+	wrefresh(win);
+	
+	char quit = '0';
+	while ((quit = wgetch(win)) != 'q'); // q 누르면 나가기
+
+	wclear(win);
+	wrefresh(win);
+}
+
+void display_help(WINDOW* win)
+{
+	def_prog_mode();
+	endwin();
+
+	pid_t pid;
+	if ((pid = fork()) == -1)
+	{
+		perror("fork");
+		exit(40);
+	}
+
+	if (pid == 0) // child
+	{
+		execlp("view", "view", "../../README.md", NULL);
+		perror("execlp");
+		exit(41);
+	}
+	else
+	{
+		wait(NULL);
+		reset_prog_mode();
+		wrefresh(win);
+	}
+}
+
+void delete_account(WINDOW* win)
+{
+	char yesno;
+	curs_set(1);
+	
+	mvwprintw(win, 13, 2, "Delete your account from StudytimeCheck? (Y/N) "); wrefresh(win);
+	while (1)
+	{
+		yesno = wgetch(win); // 삭제하려면 y 입력
+		yesno = toupper(yesno);
+		if (yesno == 'Y')
+		{
+			mvwprintw(win, 15, 2, "Enter your ID if you really want to leave: ");
+			wrefresh(win);
+			mvwprintw(win, 15, 46, "          )");
+			mvwprintw(win, 15, 45, "(");
+			
+			wrefresh(win);
+			char input[11] = "\0";
+			int input_c;
+			int i = 0;
+			while (1)
+			{
+				input_c = wgetch(win);
+				if (isalnum(input_c)) // 알파벳, 숫자만 허용
+				{
+					if (i < 10) // 10글자 이상 입력 blocking
+					{
+						mvwprintw(win, 15, 46 + i, "%c", input_c);
+						input[i++] = input_c;
+						input[i] = '\0';
+					}
+				}
+				if ((input_c == '\b' || input_c == 263) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
+				{
+					mvwprintw(win, 15, 46 + --i, " ");
+					move(15, 1 + i);
+				}
+				if (input_c == '\n') // 엔터 입력
+				{
+					if (strcmp(input, UID) == 0) // 올바르게 입력
+					{
+						// 기존의 ID 정보를 DEAD_USER로 덮어쓰기
+						Studyuser left_user;
+						strcpy(left_user.user_ID, "DEAD_USER");
+						strcpy(left_user.group_ID, NO_GROUP);
+						left_user.signup = 0;
+						left_user.lastlogin = 0;
+						lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
+						write(usersFd, &left_user, sizeof(Studyuser));
+
+						// ID 디렉토리와 내부 파일들 전부 삭제
+						if (rmdir_r(UID) == -1)
+						{
+							perror("rmdir_r");
+							exit(50);
+						}
+						mvwprintw(win, 16, 2, "Deactivated your account. See you Again...");
+						wrefresh(win);
+						sleep(2);
+						user_dead = 1; // 유저가 탈퇴했음.
+					}
+					else
+					{
+						mvwprintw(win, 16, 2, "Wrong zzz");
+						wrefresh(win);
+						sleep(2);
+					}
+					break;
+				}
+				wrefresh(win);
+			}
+			break;
+		}
+		if (yesno == 'N')
+		{
+			break;
+		}
+		wrefresh(win);
+	}
+	wclear(win);
+	wrefresh(win);
+	noecho(); cbreak(); curs_set(0);
+	return;
+}

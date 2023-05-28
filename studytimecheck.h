@@ -39,3 +39,10 @@ void monthstats(WINDOW* win);
 void display_daystats(WINDOW* win, int year, int month, int day);
 void display_weekstats(WINDOW* win, time_t today);
 void display_monthstats(WINDOW* win, struct tm statmonth_tm);
+
+void settings_select(WINDOW* win);
+void settings_screen(WINDOW* win, int arrow_select);
+void display_profile(WINDOW* win);
+void display_help(WINDOW* win);
+void delete_account(WINDOW* win);
+
