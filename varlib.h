@@ -1,41 +1,14 @@
-#define USERS_INFO_DIR "users"
-#define USERS_INFO_FILE "users.txt"
-#define NO_GROUP "no_group"
+#include <curses.h>
+#define ARROW_DOWN 258
+#define ARROW_UP 259
+#define ARROW_LEFT 260
+#define ARROW_RIGHT 261
 
-extern int usersFd;
-extern char UID[11];
+int arrow_convert(int key_select, int arrow_select, int bound);
 
-typedef struct Studyuser
-{
-	char user_ID[11];
-	char group_ID[11];
-	time_t signup;// 가입 일자
-	time_t lastlogin;// 최종 접속 시간
-	// 또 뭐 넣지
-} Studyuser;
+void wdraw_timebar(WINDOW*, int y_start, int x_start);
+void mvwprintw_standout(WINDOW*, int y, int x, char*, int line_num, int arrow_select);
+void wfill(WINDOW*, int y1, int x1, int y2, int x2, char* ch);
 
+int rmdir_r(char* path);
 
-typedef struct timelog // 공부 시간 기록을 저장하는 구조체
-{
-	// Studyuser info; 
-	char subject[30];
-	time_t start_time; // 공부 시작 시간
-	time_t finish_time; // 공부 종료 시간
-	double studytime; // 공부 시간
-} timelog;
-
-typedef struct usertime { //group ranking 때 필요한 구조체
-	char user_name[50];
-	double study_time;
-}usertime;
-
-typedef struct groupinfo {
-	char group_name[50];
-	int group_users;
-}groupinfo;
-
-void ID_check(int argc, char* argv[]);
-void login(int argc, char* argv[]);
-void initial_set();
-void unsetup();
-void set_forFirstRun();

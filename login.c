@@ -11,7 +11,8 @@
 #include <curses.h>
 #include <time.h> // time, struct tm
 #include <ctype.h>
-#include "varlib.h"
+#include "studytimecheck.h"
+#include "login.h"
 
 int usersFd;
 char UID[11];
@@ -21,7 +22,6 @@ void login(int argc, char* argv[])
 	ID_check(argc, argv);
 	set_forFirstRun();
 	strcpy(UID, argv[1]); 	
-	DIR* dir_ptr;
 	
 	if ((usersFd = open(USERS_INFO_FILE, O_RDWR)) == -1)
 	{
@@ -52,6 +52,7 @@ void login(int argc, char* argv[])
 		}
 	}
 
+	DIR* dir_ptr;
 	if ((dir_ptr = opendir(UID)) == NULL || user_exist == 0) 
 	{
 		printf("ID가 존재하지 않습니다. 해당 ID로 가입하시겠습니까? (Y/N): ");
@@ -141,6 +142,7 @@ void initial_set()
 	initscr();
 	noecho();
 	curs_set(0);
+	keypad(stdscr, true);
 }
 
 void set_forFirstRun()
@@ -155,6 +157,7 @@ void unsetup()
 {
 	echo();
 	curs_set(1);
+	keypad(stdscr, false);
 	endwin();
 	close(usersFd);
 	printf("%s님, Bye Bye!\n", UID);

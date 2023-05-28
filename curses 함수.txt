@@ -1,0 +1,30 @@
+initscr();
+endwin();
+move(row, col);
+clear();
+printw(""); // 글자 출력
+addstr();
+refresh();
+attron(int attribute); // 해당 문자 속성을 On, ex) A_BOLD
+attroff(int attribute); // 해당 문자 속성을 Off
+
+echo();
+noecho();
+cbreak();
+nocbreak();
+raw();
+noraw();
+
+getch();
+getstr();
+getnstr();
+
+
+WINDOW *win; // 윈도우 구조체 선언
+win = newwin(행 크기, 열 크기, 시작 x좌표, 시작 y좌표); // 10x10 윈도우가 (1,1)부터 출력
+box(WINDOW *winpointer, char x, char y); // 설정한 window에 테두리 만듦, x: 세로, y: 가로
+wprintw(WINDOW *winpointer, ~); // 특정 window에서 글자 출력
+wrefresh(WINDOW *winpointer); // 특정 window refresh();
+delwin(WINDOW *winpointer); // window 제거
+
+https://lowid.tistory.com/entry/Curses

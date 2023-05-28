@@ -10,26 +10,31 @@
 #include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
 #include <curses.h>
 #include <time.h> // time, struct tm
+#include "studytimecheck.h"
 #include "varlib.h"
+#include "login.h"
 
-#define JANUARY 0
-#define DECEMBER 11
-#define SECONDS_PER_DAY 86400
 #define MAX 11
-#define ARROW_DOWN 2
-#define ARROW_UP 3
-#define ARROW_LEFT 4
-#define ARROW_RIGHT 5
 
-void main_screen();
+typedef struct usertime { //group ranking 때 필요한 구조체
+	char user_name[50];
+	double study_time;
+}usertime;
+
+typedef struct groupinfo {
+	char group_name[50];
+	int group_users;
+}groupinfo;
+
+
+
+
+void main_screen(int arrow_select);
 void menu2();
-void menu2_screen(WINDOW* win);
-void menu2_1(WINDOW* win); // 이름을 어칼까
-void day_stats(WINDOW* win, int year, int month, int day);
+void menu2_1(WINDOW* win);
 void menu2_2(WINDOW* win);
-void week_stats(WINDOW* win, time_t today);
 void menu2_3(WINDOW* win);
-void month_stats(WINDOW* win, struct tm statmonth_tm);
+
 
 // MENU 3 관련 함수 
 void menu3();
@@ -40,12 +45,10 @@ void menu3_leave(WINDOW* win);
 void menu3_rank(WINDOW* win);
 
 void menu4();
-void menu4_screen(WINDOW* win);
+void menu4_screen(WINDOW* win, int select);
 void menu4_profile(WINDOW* win);
 void menu4_help(WINDOW* win);
 void menu4_deleteAccount(WINDOW* win);
-
-int rmdir_r(char* path);
 
 int user_dead = 0; // 유저가 탈퇴했는지 인지하는 변수
 int usersFd; // USERS_INFO_FILE file descriptor, 이건 users.txt 파일 내부에서 로그인한 유저의 정보를 계속 가리킬 예정
@@ -56,24 +59,42 @@ int main(int argc, char* argv[])
 	login(argc, argv);
 	initial_set();
 	
-	char menu;
+	int key_input;
+	int arrow_select = 1;
 	while (1)
 	{
-		main_screen(UID);
-		menu = getch();
-		// if(menu == '1') menu1();
-		if (menu == '2') menu2();
-		if (menu == '3') menu3();
-		if (menu == '4') menu4();
-		if (menu == '5') break;
+		main_screen(arrow_select);
+		key_input = getch();
+		arrow_select = arrow_convert(key_input, arrow_select, 5);
+		// if(key_input == '1' || (key_input == '\n' && arrow_select == 1)) menu1();
+		if (key_input == '2' || (key_input == '\n' && arrow_select == 2)) menu2();
+		if (key_input == '3' || (key_input == '\n' && arrow_select == 3)) menu3();
+		if (key_input == '4' || (key_input == '\n' && arrow_select == 4)) menu4();
+		if (key_input == '5' || (key_input == '\n' && arrow_select == 5)) break;
 		if (user_dead == 1) break;
 	}
-	
 	unsetup();
 	return 0;
 }
 
-void main_screen()
+int arrow_convert(int key_select, int arrow_select, int bound)
+{
+	if(key_select == ARROW_DOWN || key_select == ARROW_RIGHT)
+	{
+		arrow_select++;
+		if(arrow_select > bound)
+			arrow_select = 1;
+	}
+	if(key_select == ARROW_UP || key_select == ARROW_LEFT)
+	{
+		arrow_select--;
+		if(arrow_select < 1)
+			arrow_select = bound;
+	}
+	return arrow_select;
+}
+
+void main_screen(int arrow_select)
 {
 	int x = 3;
 	int  y = 7;
@@ -255,455 +276,61 @@ void main_screen()
 
 	//M
 
-
+	
 	move(x, y + 40);
 	printw("Welcome! %s!", UID);
-	move(x + 1, y + 40);
-	printw("1. Studytime Measuring");
-	move(x + 2, y + 40);
-	printw("2. Display Stats");
-	move(x + 3, y + 40);
-	printw("3. Group");
-	move(x + 4, y + 40);
-	printw("4. Settings");
-	move(x + 5, y + 40);
-	printw("5. Exit");
+	mvwprintw_standout(stdscr, x + 1, y + 40, "1. Studytime Measuring", 1, arrow_select);
+	mvwprintw_standout(stdscr, x + 2, y + 40, "2. Display stats", 2, arrow_select);
+	mvwprintw_standout(stdscr, x + 3, y + 40, "3. Group", 3, arrow_select);
+	mvwprintw_standout(stdscr, x + 4, y + 40, "4. Settings", 4, arrow_select);
+	mvwprintw_standout(stdscr, x + 5, y + 40, "5. Exit", 5, arrow_select);
+	
 	refresh();
+}
+
+void mvwprintw_standout(WINDOW* win, int y, int x, char* str, int line_num, int select)
+{
+	if(line_num == select)
+		wstandout(win);
+	mvwprintw(win, y, x, "%s", str);
+	wstandend(win);
 }
 
 void menu2()
 {
 	WINDOW* win = newwin(34, 60, 1, 1);
-
-	char c;
-	while (1)
-	{
-		menu2_screen(win);
-		c = wgetch(win);
-		if (c == 'q') break;
-		if (c == '1') menu2_1(win);
-		if (c == '2') menu2_2(win);
-		if (c == '3') menu2_3(win);
-		if (user_dead == 1) break;
-	}
-
+	keypad(win, true);
+	stats_select(win);
 	wclear(win);
 	wrefresh(win);
 	delwin(win);
 }
 
-void menu2_screen(WINDOW* win)
-{
-	wclear(win);
-	box(win, '|', '-');
-	mvwprintw(win, 3, 2, "Display stats                       ");
-	mvwprintw(win, 6, 2, "1. Today's Studytime                ");
-	mvwprintw(win, 8, 2, "2. This week's Studytime            ");
-	mvwprintw(win, 10, 2, "3. This month's Studytime           ");
-	mvwprintw(win, 30, 2, "\'q\' to quit");
-	wrefresh(win);
-}
-
 void menu2_1(WINDOW* win)
 {
-	time_t statdate = time(NULL);
-	time_t today = statdate;
-	struct tm* statdate_tm = localtime(&statdate);
-
-	int today_year = statdate_tm->tm_year + 1900;
-	int today_month = statdate_tm->tm_mon + 1;
-	int today_day = statdate_tm->tm_mday;
-
-	// 통계를 보여줄 년월일 변수
-	int stat_year = statdate_tm->tm_year + 1900;
-	int stat_month = statdate_tm->tm_mon + 1;
-	int stat_day = statdate_tm->tm_mday;
-
-	keypad(win, TRUE); // 방향키 받을 거임
-
-	char c;
-	while (1)
-	{
-		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
-		if (stat_year == today_year && stat_month == today_month && stat_day == today_day)
-			mvwprintw(win, 5, 2, "Studytime during Today(%04d-%02d-%02d)", stat_year, stat_month, stat_day);
-		else
-			mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d           ", stat_year, stat_month, stat_day);
-		mvwprintw(win, 6, 2, "                         ");
-		mvwprintw(win, 10, 2, "                         ");
-		day_stats(win, stat_year, stat_month, stat_day);
-		wrefresh(win);
-
-		c = wgetch(win);
-		if (c == 'q') break;
-		if (c == ARROW_DOWN || c == ARROW_LEFT)
-		{
-			statdate -= SECONDS_PER_DAY;
-			statdate_tm = localtime(&statdate);
-			stat_year = statdate_tm->tm_year + 1900;
-			stat_month = statdate_tm->tm_mon + 1;
-			stat_day = statdate_tm->tm_mday;
-		}
-		if (statdate < today && (c == ARROW_UP || c == ARROW_RIGHT))
-		{
-			statdate += SECONDS_PER_DAY;
-			statdate_tm = localtime(&statdate);
-			stat_year = statdate_tm->tm_year + 1900;
-			stat_month = statdate_tm->tm_mon + 1;
-			stat_day = statdate_tm->tm_mday;
-		}
-	}
-	keypad(win, FALSE);
-	wclear(win);
+	daystats(win);
 }
 
-void day_stats(WINDOW* win, int year, int month, int day)
+void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
 {
-	char statfile[256];
-
-	sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-
-
-	char UID_dir[256];
-	sprintf(UID_dir, "%s/%s", ".", UID);
-	mvwprintw(win, 6, 2, "%s", UID_dir);
-	if (chdir(UID_dir) == -1)
-	{
-		perror("chdir");
-		exit(21);
-	}
-
-	int fd1;
-	if ((fd1 = creat(statfile, 0777)) == -1)
-	{
-		perror("open");
-		exit(22);
-	}
-
-	srand(time(NULL));
-	timelog templog = { 0, };
-	strcpy(templog.subject, "C Language");
-	templog.start_time = 0;
-	templog.finish_time = rand() % 10800 + 2;
-	templog.studytime = (double)templog.finish_time - templog.start_time;
-	write(fd1, &templog, sizeof(timelog));
-
-	timelog templog2 = { 0, };
-	strcpy(templog2.subject, "System Programming");
-	templog2.start_time = 0;
-	templog2.finish_time = rand() % 10800 + 2;
-	templog2.studytime = (double)templog2.finish_time - templog2.start_time;
-	write(fd1, &templog2, sizeof(timelog));
-	close(fd1);
-
-	int fd2;
-	double total = 0.0;
-	if ((fd2 = open(statfile, O_RDONLY)) == -1)
-	{
-		perror("open");
-		exit(22);
-	}
-
-	timelog templog3;
-	int j = 0;
-	mvwprintw(win, 9, 2, "|----------------------------------------------------|");
-	mvwprintw(win, 12, 2, "|----------------------------------------------------|");
-	while (read(fd2, &templog3, sizeof(timelog)) >= sizeof(timelog))
-	{
-		total += templog3.studytime;
-		mvwprintw(win, 8 + 3 * j, 2, "%s studytime: %.0f seconds         ", templog3.subject, templog3.studytime);
-		for (int i = 0; i < templog3.studytime / 210; i++)
-			mvwprintw(win, 9 + 3 * j, 3 + i, "%%");
-		j++;
-	}
-
-	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
-
-	if (chdir("..") == -1)
-	{
-		perror("chdir");
-		exit(21);
-	}
-	close(fd2);
+	for(int i=y1; i<=y2; i++)
+		for(int j=x1; j<=x2; j++)
+			mvwprintw(win, i, j, "%s", ch);
 }
 
 void menu2_2(WINDOW* win)
 {
-	time_t endweek = time(NULL);
-	time_t today = endweek;
-	time_t startweek = endweek - (SECONDS_PER_DAY * 6);
-	// localtime은 static data구나
-	struct tm endweek_tm; localtime_r(&endweek, &endweek_tm);
-	struct tm startweek_tm; localtime_r(&startweek, &startweek_tm);
-
-	// int today_year = endweek_tm->tm_year + 1900;
-	// int today_month = endweek_tm->tm_mon + 1;
-	// int today_day = endweek_tm->tm_mday;
-
-	keypad(win, TRUE); // 방향키 받을 거임
-
-	char c;
-	while (1)
-	{
-		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
-		mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d ~ %04d-%02d-%02d", startweek_tm.tm_year + 1900, startweek_tm.tm_mon + 1, startweek_tm.tm_mday, endweek_tm.tm_year + 1900, endweek_tm.tm_mon + 1, endweek_tm.tm_mday);
-		mvwprintw(win, 6, 2, "                         ");
-		mvwprintw(win, 10, 2, "                         ");
-		week_stats(win, endweek);
-		wrefresh(win);
-
-		c = wgetch(win);
-		if (c == 'q') break;
-		if (c == ARROW_DOWN || c == ARROW_LEFT)
-		{
-			endweek -= SECONDS_PER_DAY;
-			startweek -= SECONDS_PER_DAY;
-		}
-		if (endweek < today && (c == ARROW_UP || c == ARROW_RIGHT))
-		{
-			endweek += SECONDS_PER_DAY;
-			startweek += SECONDS_PER_DAY;
-		}
-		localtime_r(&endweek, &endweek_tm);
-		localtime_r(&startweek, &startweek_tm);
-	}
-	keypad(win, FALSE);
-	wclear(win);
+	weekstats(win);
 }
 
-void week_stats(WINDOW* win, time_t today)
-{
-	char UID_dir[256];
-	sprintf(UID_dir, "%s/%s", ".", UID);
-	// mvwprintw(win, 6, 2, "%s", UID_dir);
-	if (chdir(UID_dir) == -1)
-	{
-		perror("chdir");
-		exit(21);
-	}
 
-	timelog weeklog[7];
-	int year, month, day;
-	double total = 0.0;
-	for (int week_i = 6; week_i >= 0; week_i--)
-	{
-		char statfile[15];
-		struct tm today_tm; localtime_r(&today, &today_tm);
-		year = today_tm.tm_year + 1900;
-		month = today_tm.tm_mon + 1;
-		day = today_tm.tm_mday;
-		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-
-		weeklog[week_i].studytime = 0.0;
-		int fd;
-		if ((fd = open(statfile, O_RDONLY)) == -1)
-		{
-			mvwprintw(win, 8 + week_i * 3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, 0);
-			mvwprintw(win, 9 + week_i * 3, 2, "|----------------------------------------------------|");
-			today -= SECONDS_PER_DAY;
-			continue;
-		}
-
-		timelog templog;
-		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
-		{
-			weeklog[week_i].studytime += templog.studytime;
-			total += templog.studytime;
-		}
-		close(fd);
-
-		mvwprintw(win, 8 + week_i * 3, 2, "%04d-%02d-%02d: %5.0f seconds", year, month, day, weeklog[week_i].studytime);
-		mvwprintw(win, 9 + week_i * 3, 2, "|----------------------------------------------------|");
-		for (int i = 0; i < weeklog[week_i].studytime / 1000; i++)
-			mvwprintw(win, 9 + week_i * 3, 3 + i, "%%");
-		today -= SECONDS_PER_DAY;
-	}
-	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds", total);
-
-	if (chdir("..") == -1)
-	{
-		perror("chdir");
-		exit(21);
-	}
-}
 
 void menu2_3(WINDOW* win)
 {
-	time_t statmonth = time(NULL);
-	time_t today = statmonth;
-	// localtime은 static data구나
-	struct tm statmonth_tm;
-	// int today_year = endweek_tm->tm_year + 1900;
-	// int today_month = endweek_tm->tm_mon + 1;
-	// int today_day = endweek_tm->tm_mday;
-
-	keypad(win, TRUE); // 방향키 받을 거임
-
-	char c;
-	while (1)
-	{
-		localtime_r(&statmonth, &statmonth_tm);
-		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
-		mvwprintw(win, 5, 20, "                       ");
-		switch (statmonth_tm.tm_mon + 1)
-		{
-		case 1:
-			mvwprintw(win, 5, 2, "Studytime of January, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 2:
-			mvwprintw(win, 5, 2, "Studytime of February, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 3:
-			mvwprintw(win, 5, 2, "Studytime of March, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 4:
-			mvwprintw(win, 5, 2, "Studytime of April, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 5:
-			mvwprintw(win, 5, 2, "Studytime of May, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 6:
-			mvwprintw(win, 5, 2, "Studytime of June, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 7:
-			mvwprintw(win, 5, 2, "Studytime of July, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 8:
-			mvwprintw(win, 5, 2, "Studytime of August, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 9:
-			mvwprintw(win, 5, 2, "Studytime of September, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 10:
-			mvwprintw(win, 5, 2, "Studytime of October, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 11:
-			mvwprintw(win, 5, 2, "Studytime of November, %d", statmonth_tm.tm_year + 1900);
-			break;
-		case 12:
-			mvwprintw(win, 5, 2, "Studytime of December, %d", statmonth_tm.tm_year + 1900);
-			break;
-		}
-
-		mvwprintw(win, 6, 2, "                         ");
-		mvwprintw(win, 10, 2, "                         ");
-		month_stats(win, statmonth_tm);
-		wrefresh(win);
-
-		c = wgetch(win);
-		if (c == 'q') break;
-		if (c == ARROW_DOWN || c == ARROW_LEFT)
-		{
-			if (statmonth_tm.tm_mon > JANUARY) // 2월~12월
-				statmonth_tm.tm_mon--;
-			else // 1월
-			{
-				statmonth_tm.tm_year--;
-				statmonth_tm.tm_mon = DECEMBER; // 12월
-			}
-		}
-		if (statmonth < today && (c == ARROW_UP || c == ARROW_RIGHT))
-		{
-			if (statmonth_tm.tm_mon < DECEMBER) // 1월~11월
-				statmonth_tm.tm_mon++;
-			else // 12월
-			{
-				statmonth_tm.tm_year++;
-				statmonth_tm.tm_mon = JANUARY;
-			}
-		}
-		statmonth = mktime(&statmonth_tm);
-	}
-	keypad(win, FALSE);
-	wclear(win);
+	monthstats(win);
 }
 
-void month_stats(WINDOW* win, struct tm statmonth_tm)
-{
-	char UID_dir[256];
-	sprintf(UID_dir, "%s/%s", ".", UID);
-	// mvwprintw(win, 6, 2, "%s", UID_dir);
 
-	if (chdir(UID_dir) == -1)
-	{
-		perror("chdir");
-		exit(21);
-	}
-
-	// 구조체 배열은 static 한 건가?
-	timelog subjectlog[7] = { 0, }; // 과목별 로그
-	int year, month, day;
-	year = statmonth_tm.tm_year + 1900;
-	month = statmonth_tm.tm_mon + 1;
-	double total = 0.0;
-	int day_i, subject_count = 0;
-
-	switch (month)
-	{
-	case 1:
-	case 3:
-	case 5:
-	case 7:
-	case 8:
-	case 10:
-	case 12:
-		day_i = 31;
-		break;
-	case 2:
-		day_i = 29;
-		break;
-	default:
-		day_i = 30;
-	}
-
-	for (; day_i >= 1; day_i--)
-	{
-		char statfile[15];
-		day = day_i;
-		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
-
-		memset(subjectlog[subject_count].subject, 0, sizeof(char) * 30);
-		subjectlog[subject_count].studytime = 0.0;
-		int fd;
-		if ((fd = open(statfile, O_RDONLY)) == -1)
-			continue;
-
-		timelog templog;
-		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
-		{
-			int subject_i;
-			total += templog.studytime;
-			for (subject_i = 0; subject_i < subject_count; subject_i++)
-			{
-				if (strcmp(subjectlog[subject_i].subject, templog.subject) == 0)
-				{
-					subjectlog[subject_i].studytime += templog.studytime;
-					break;
-				}
-			}
-			if (subject_i != subject_count)
-				continue;
-			strcpy(subjectlog[subject_count].subject, templog.subject);
-			subjectlog[subject_count++].studytime += templog.studytime;
-		}
-		close(fd);
-	}
-	mvwprintw(win, 6, 2, "Total studytime: %.0f seconds       ", total);
-	for (int subject_i = 0; subject_i < subject_count; subject_i++)
-	{
-		mvwprintw(win, 8 + subject_i * 3, 2, "%d. %s", subject_i + 1, subjectlog[subject_i].subject);
-		mvwprintw(win, 9 + subject_i * 3, 2, "|------------------------------------- %7.0f seconds", subjectlog[subject_i].subject, subjectlog[subject_i].studytime);
-	}
-	for (int subject_i = 0; subject_i < subject_count; subject_i++)
-		for (int j = 0; j < subjectlog[subject_i].studytime / 5000; j++)
-			mvwprintw(win, 9 + 3 * subject_i, 2 + j, "%%");
-
-	if (chdir("..") == -1)
-	{
-		perror("chdir");
-		exit(21);
-	}
-}
 
 void menu3() {
 	//initscr();
@@ -752,7 +379,7 @@ void menu3_create(WINDOW* win) {
 	// ./users 안에 생성된 그룹이 있는지 검사
 	int group_flag = 0; // ./users 안에 생성된 그룹이 있는지 검사하는 flag
 	DIR* users_dir = opendir("./users");
-	struct dirent* ent;
+	struct dirent* ent;  
 	if (users_dir != NULL) {
 
 		while ((ent = readdir(users_dir)) != NULL) {
@@ -809,7 +436,7 @@ void menu3_create(WINDOW* win) {
 		// 현재 경로 ./users
 		// ./users/no_group/user 에서 ./users/groupid/user로 디렉토리 경로 바꾸기
 
-		// 디렉토리 경로 바꾸기 실패
+		// 디렉토리 경로 바꾸기 실패  
 		if (rename(old_path, new_path) != 0) {
 			perror("rename");
 			return;
@@ -841,7 +468,7 @@ void menu3_create(WINDOW* win) {
 
 				// 읽을 구조체 선언하기
 				groupinfo rd;
-				while (read(fd2, &rd, sizeof(groupinfo))) {
+				while (read(fd2, &rd,   sizeof(groupinfo))) {
 					// 파일에 그룹이 존재하는 경우 = 이미 존재하는 그룹 -> 그러면 안됨
 					if (strcmp(rd.group_name, groupid) == 0) {
 						isgroup = 1;
@@ -1603,17 +1230,19 @@ void menu3_screen(WINDOW* win) {
 void menu4(DIR* dir_ptr)
 {
 	WINDOW* win = newwin(34, 60, 1, 1);
-
-	char c;
+	keypad(win, TRUE);
+	
+	int c;
+	int arrow_select = 1;
 	while (1)
 	{
-		menu4_screen(win);
+		menu4_screen(win, arrow_select);
 		c = wgetch(win);
+		arrow_select = arrow_convert(c, arrow_select, 3);
 		if (c == 'q') break;
-		if (c == '1') menu4_profile(win);
-		if (c == '2') menu4_help(win);
-		if (c == '3') menu4_deleteAccount(win); // 3 누르면 계정 삭제할지 말지 선택
-
+		if (c == '1' || (c == '\n' && arrow_select == 1)) menu4_profile(win);
+		if (c == '2' || (c == '\n' && arrow_select == 2)) menu4_help(win);
+		if (c == '3' || (c == '\n' && arrow_select == 3)) menu4_deleteAccount(win); // 3 누르면 계정 삭제할지 말지 선택
 		if (user_dead == 1) break;
 	}
 	wclear(win);
@@ -1621,13 +1250,13 @@ void menu4(DIR* dir_ptr)
 	delwin(win);
 }
 
-void menu4_screen(WINDOW* win)
+void menu4_screen(WINDOW* win, int arrow_select)
 {
 	box(win, '|', '-');
 	mvwprintw(win, 3, 2, "Settings");
-	mvwprintw(win, 6, 2, "1. My profile");
-	mvwprintw(win, 8, 2, "2. help");
-	mvwprintw(win, 10, 2, "3. Delete account");
+	mvwprintw_standout(win, 6, 2, "1. My profile", 1, arrow_select);
+	mvwprintw_standout(win, 8, 2, "2. help", 2, arrow_select);
+	mvwprintw_standout(win, 10, 2, "3. Delete account", 3, arrow_select);
 	mvwprintw(win, 30, 2, "\'q\' to quit");
 	wrefresh(win);
 }
@@ -1640,29 +1269,25 @@ void menu4_profile(WINDOW* win)
 	read(ufd, &s_user, sizeof(Studyuser));
 
 	struct tm* tm_ptr;
-
+	wfill(win, 3, 2, 30, 59, " ");
 	mvwprintw(win, 3, 2, "Settings - %s\'s profile", s_user.user_ID);
 	mvwprintw(win, 6, 2, "User ID: %s", s_user.user_ID);
 	mvwprintw(win, 8, 2, "Group ID: %s", s_user.group_ID);
 
 	tm_ptr = localtime(&(s_user.signup)); // time_t-> struct tm
-	mvwprintw(win, 10, 2, "                         ");
+
 	mvwprintw(win, 11, 2, "Sign up time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
-	mvwprintw(win, 11, 59, "|");
 	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
 	mvwprintw(win, 13, 2, "Last login time: %25s", asctime(tm_ptr)); // struct tm -> human_readable
-	mvwprintw(win, 13, 59, "|");
 	mvwprintw(win, 30, 2, "%s", "\'q\' to quit");
-
+	box(win, '|', '-');
 	wrefresh(win);
-
+	
 	char quit = '0';
 	while ((quit = wgetch(win)) != 'q'); // q 누르면 나가기
 
 	wclear(win);
 	wrefresh(win);
-
-	return;
 }
 
 void menu4_help(WINDOW* win)
@@ -1695,7 +1320,7 @@ void menu4_deleteAccount(WINDOW* win)
 {
 	char yesno;
 	curs_set(1);
-	mvwprintw(win, 17, 2, "             ");
+	
 	mvwprintw(win, 13, 2, "Delete your account from StudytimeCheck? (Y/N) "); wrefresh(win);
 	while (1)
 	{
@@ -1707,13 +1332,15 @@ void menu4_deleteAccount(WINDOW* win)
 			wrefresh(win);
 			mvwprintw(win, 15, 46, "          )");
 			mvwprintw(win, 15, 45, "(");
+			
 			wrefresh(win);
-			char input[11] = "\0", input_c;
+			char input[11] = "\0";
+			int input_c;
 			int i = 0;
 			while (1)
 			{
 				input_c = wgetch(win);
-				if (isalpha(input_c) || isdigit(input_c)) // 알파벳, 숫자만 허용
+				if (isalnum(input_c)) // 알파벳, 숫자만 허용
 				{
 					if (i < 10) // 10글자 이상 입력 blocking
 					{
@@ -1722,7 +1349,7 @@ void menu4_deleteAccount(WINDOW* win)
 						input[i] = '\0';
 					}
 				}
-				if ((input_c == '\b' || input_c == 127) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
+				if ((input_c == '\b' || input_c == 263) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
 				{
 					mvwprintw(win, 15, 46 + --i, " ");
 					move(15, 1 + i);
@@ -1765,8 +1392,6 @@ void menu4_deleteAccount(WINDOW* win)
 		}
 		if (yesno == 'N')
 		{
-			mvwprintw(win, 12, 2, "                                               ");
-			wrefresh(win);
 			break;
 		}
 		wrefresh(win);
@@ -1781,7 +1406,7 @@ int rmdir_r(char* path)
 {
 	 DIR* dir_ptr;
    	 struct dirent *file;
-   	 struct stat buf;
+   	 struct stat st_buf;
    	 char filename[1024];
 
    	 if((dir_ptr = opendir(path)) == NULL)
@@ -1795,10 +1420,10 @@ int rmdir_r(char* path)
 		sprintf(filename, "%s/%s", path, file->d_name);
 
         
-       	if(lstat(filename, &buf) == -1)
+       	if(lstat(filename, &st_buf) == -1)
             		continue;
 
-       	if(S_ISDIR(buf.st_mode)) 
+       	if(S_ISDIR(st_buf.st_mode)) 
        	{    	
         		if(rmdir_r(filename) == -1)
                 		return -1;
