@@ -1,16 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h> 
-#include <string.h> // strlen
-#include <ctype.h> // toupper, isalpha, isdigit
-#include <sys/stat.h> // mkdir
-#include <sys/types.h> // mkdir, lseek
-#include <sys/wait.h> // wait
-#include <fcntl.h> // open
-#include <dirent.h> // struct dirent
-#include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
-#include <curses.h>
-#include <time.h> // time, struct tm
+#include <string.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <unistd.h> 
+#include <curses.h>
+#include <time.h>
 #include "studytimecheck.h"
 #include "login.h"
 
@@ -137,12 +135,15 @@ void ID_check(int argc, char* argv[])
 	return;
 }
 
-void initial_set()
+WINDOW* initial_set()
 {
 	initscr();
 	noecho();
 	curs_set(0);
-	keypad(stdscr, true);
+	WINDOW* win = newwin(34, 60, 1, 1);
+	keypad(win, true);
+	
+	return win;
 }
 
 void set_forFirstRun()
