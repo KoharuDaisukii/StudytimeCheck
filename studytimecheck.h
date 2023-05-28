@@ -36,6 +36,7 @@ void stats_screen(WINDOW* win, int arrow_select);
 void daystats(WINDOW* win);
 void weekstats(WINDOW* win);
 void monthstats(WINDOW* win);
+void create_record(WINDOW* win, int year, int month, int day);
 void display_daystats(WINDOW* win, int year, int month, int day);
 void display_weekstats(WINDOW* win, time_t today);
 void display_monthstats(WINDOW* win, struct tm statmonth_tm);
