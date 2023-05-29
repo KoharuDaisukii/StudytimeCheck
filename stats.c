@@ -14,10 +14,10 @@
 void menu2_1(WINDOW*);
 void menu2_2(WINDOW*);
 void menu2_3(WINDOW*);
+void wsctotime_month(WINDOW* win, int seconds);
 
 void wsctotime(WINDOW* win, int seconds)
 {
-	
 	int day, hour, min;
 	day = seconds / SECONDS_PER_DAY;
 	min = seconds / 60;
@@ -33,6 +33,26 @@ void wsctotime(WINDOW* win, int seconds)
 		wprintw(win, "%0dh %0dm %0ds", hour, min, seconds);
 	else
 		wprintw(win, "%0dh %0dm %0ds", hour, min, seconds);
+}
+
+void wsctotime_month(WINDOW* win, int seconds)
+{
+	int hour, min;
+	min = seconds / 60;
+	hour = min / 60;
+	seconds = seconds % 60;
+	min = seconds % 60;
+	if(seconds == 0)
+	{
+		wprintw(win, "    ---    ", hour, min, seconds);
+		return;
+	}
+	if(hour > 0)
+		wprintw(win, " %02dh%02dm%02ds ", hour, min, seconds);
+	else if(min > 0)
+		wprintw(win, " %02dh%02dm%02ds ", hour, min, seconds);
+	else
+		wprintw(win, " %02dh%02dm%02ds ", hour, min, seconds);
 }
 
 void wdraw_timebar(WINDOW* win, int y_start, int x_start)
@@ -69,7 +89,7 @@ void stats_screen(WINDOW* win, int arrow_select)
 	mvwprintw_standout(win, 6, 2, "1. Today's Studytime", 1, arrow_select);
 	mvwprintw_standout(win, 8, 2, "2. This week's Studytime", 2, arrow_select);
 	mvwprintw_standout(win, 10, 2, "3. This month's Studytime", 3, arrow_select);
-	mvwprintw_standout(win, 30, 2, "- Quit", 4, arrow_select);
+	mvwprintw_standout(win, 31, 2, "- Quit", 4, arrow_select);
 	wrefresh(win);
 }
 
@@ -96,7 +116,7 @@ void daystats(WINDOW* win)
 			mvwprintw(win, 5, 2, "Studytime during Today(%04d-%02d-%02d)", stat_year, stat_month, stat_day);
 		else
 			mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d           ", stat_year, stat_month, stat_day);
-		mvwprintw_standout(win, 30, 2, "ENTER to quit", 0, 0);	
+		mvwprintw_standout(win, 31, 2, "ENTER to quit", 0, 0);	
 		wfill(win, 6, 1, 29, 55, " ");
 		display_daystats(win, stat_year, stat_month, stat_day);
 		wrefresh(win);
@@ -254,7 +274,7 @@ void weekstats(WINDOW* win)
 		wfill(win, 6, 1, 29, 55, " ");
 		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
 		mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d ~ %04d-%02d-%02d", startweek_tm.tm_year + 1900, startweek_tm.tm_mon + 1, startweek_tm.tm_mday, endweek_tm.tm_year + 1900, endweek_tm.tm_mon + 1, endweek_tm.tm_mday);
-		mvwprintw_standout(win, 30, 2, "ENTER to quit", 0, 0);
+		mvwprintw_standout(win, 31, 2, "ENTER to quit", 0, 0);
 		display_weekstats(win, endweek);
 		wrefresh(win);
 
@@ -331,7 +351,7 @@ void display_weekstats(WINDOW* win, time_t today)
 	mvwprintw(win, 6, 2, "Total studytime: ");
 	wsctotime(win, total);
 	
-	for(int week_i = 0; week_i < 7 ; week_i++)
+	for(int week_i = 0; week_i <= 6 ; week_i++)
 	{
 		if(weeklog[week_i].studytime == 0)
 			continue;
@@ -405,10 +425,10 @@ void monthstats(WINDOW* win)
 			mvwprintw(win, 5, 2, "Studytime of December, %d", statmonth_tm.tm_year + 1900);
 			break;
 		}
-		mvwprintw_standout(win, 30, 2, "ENTER to quit", 0, 0);
+		mvwprintw_standout(win, 31, 2, "ENTER to quit", 0, 0);
 		display_monthstats(win, statmonth_tm);
 		wrefresh(win);
-
+		
 		c = wgetch(win);
 		if (c == '\n') break;
 		if (c == ARROW_DOWN || c == ARROW_LEFT)
@@ -447,13 +467,12 @@ void display_monthstats(WINDOW* win, struct tm statmonth_tm)
 		exit(21);
 	}
 
-	// 구조체 배열은 static 한 건가?
-	timelog subjectlog[7] = { 0, }; // 과목별 로그
+	timelog monthlog[32] = { 0, };
 	int year, month, day;
 	year = statmonth_tm.tm_year + 1900;
 	month = statmonth_tm.tm_mon + 1;
 	double total = 0.0;
-	int day_i, subject_count = 0;
+	int month_last;
 
 	switch (month)
 	{
@@ -464,57 +483,44 @@ void display_monthstats(WINDOW* win, struct tm statmonth_tm)
 	case 8:
 	case 10:
 	case 12:
-		day_i = 31;
+		month_last = 31;
 		break;
 	case 2:
-		day_i = 29;
+		month_last = 29;
 		break;
 	default:
-		day_i = 30;
+		month_last = 30;
 	}
 
-	for (; day_i >= 1; day_i--)
+	for (int day_i = month_last; day_i >= 1; day_i--)
 	{
 		char statfile[15];
 		day = day_i;
 		sprintf(statfile, "%04d%02d%02d.txt", year, month, day);
 
-		memset(subjectlog[subject_count].subject, 0, sizeof(char) * 30);
-		subjectlog[subject_count].studytime = 0.0;
+		monthlog[day_i].studytime = 0.0;
 		int fd;
 		if ((fd = open(statfile, O_RDONLY)) == -1)
 			continue;
 
 		timelog templog;
 		while (read(fd, &templog, sizeof(timelog)) >= sizeof(timelog))
-		{
-			int subject_i;
-			total += templog.studytime;
-			for (subject_i = 0; subject_i < subject_count; subject_i++)
-			{
-				if (strcmp(subjectlog[subject_i].subject, templog.subject) == 0)
-				{
-					subjectlog[subject_i].studytime += templog.studytime;
-					break;
-				}
-			}
-			if (subject_i != subject_count)
-				continue;
-			strcpy(subjectlog[subject_count].subject, templog.subject);
-			subjectlog[subject_count++].studytime += templog.studytime;
-		}
+			monthlog[day_i].studytime += templog.studytime;
+		total += monthlog[day_i].studytime;
 		close(fd);
 	}
 	mvwprintw(win, 6, 2, "Total studytime: ");
 	wsctotime(win, total);
-	for (int subject_i = 0; subject_i < subject_count; subject_i++)
+	for (int day_i = 0; day_i < month_last; day_i++)
 	{
-		mvwprintw(win, 8 + subject_i * 3, 2, "%d. %s", subject_i + 1, subjectlog[subject_i].subject);
-		mvwprintw(win, 9 + subject_i * 3, 2, "|------------------------------------- %7.0f seconds", subjectlog[subject_i].subject, subjectlog[subject_i].studytime);
+		mvwprintw(win, 8+(day_i/5)*3, 2+(day_i%5)*11, "   %02d/%02d   ", month, day_i + 1);
+		if(monthlog[day_i+1].studytime > 0)
+			mvwprintw(win, 9+(day_i/5)*3, 2+(day_i%5)*11, "     O     ");
+		else
+			mvwprintw(win, 9+(day_i/5)*3, 2+(day_i%5)*11, "     X     ");
+		wmove(win, 10+(day_i/5)*3, 2+(day_i%5)*11);
+		wsctotime_month(win, monthlog[day_i+1].studytime);
 	}
-	for (int subject_i = 0; subject_i < subject_count; subject_i++)
-		for (int j = 0; j < subjectlog[subject_i].studytime / 5000; j++)
-			mvwprintw(win, 9 + 3 * subject_i, 2 + j, "%%");
 
 	if (chdir("..") == -1)
 	{
