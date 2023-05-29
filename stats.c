@@ -69,7 +69,7 @@ void stats_screen(WINDOW* win, int arrow_select)
 	mvwprintw_standout(win, 6, 2, "1. Today's Studytime", 1, arrow_select);
 	mvwprintw_standout(win, 8, 2, "2. This week's Studytime", 2, arrow_select);
 	mvwprintw_standout(win, 10, 2, "3. This month's Studytime", 3, arrow_select);
-	mvwprintw_standout(win, 12, 2, "4. Go Back", 4, arrow_select);
+	mvwprintw_standout(win, 30, 2, "- Quit", 4, arrow_select);
 	wrefresh(win);
 }
 
@@ -96,13 +96,13 @@ void daystats(WINDOW* win)
 			mvwprintw(win, 5, 2, "Studytime during Today(%04d-%02d-%02d)", stat_year, stat_month, stat_day);
 		else
 			mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d           ", stat_year, stat_month, stat_day);
-			
+		mvwprintw_standout(win, 30, 2, "ENTER to quit", 0, 0);	
 		wfill(win, 6, 1, 29, 55, " ");
 		display_daystats(win, stat_year, stat_month, stat_day);
 		wrefresh(win);
-
+		
 		c = wgetch(win);
-		if (c == 'q') break;
+		if (c == '\n') break;
 		if (c == ARROW_DOWN || c == ARROW_LEFT)
 		{
 			statdate -= SECONDS_PER_DAY;
@@ -254,12 +254,12 @@ void weekstats(WINDOW* win)
 		wfill(win, 6, 1, 29, 55, " ");
 		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
 		mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d ~ %04d-%02d-%02d", startweek_tm.tm_year + 1900, startweek_tm.tm_mon + 1, startweek_tm.tm_mday, endweek_tm.tm_year + 1900, endweek_tm.tm_mon + 1, endweek_tm.tm_mday);
-
+		mvwprintw_standout(win, 30, 2, "ENTER to quit", 0, 0);
 		display_weekstats(win, endweek);
 		wrefresh(win);
 
 		c = wgetch(win);
-		if (c == 'q') break;
+		if (c == '\n') break;
 		if (c == ARROW_DOWN || c == ARROW_LEFT)
 		{
 			endweek -= SECONDS_PER_DAY;
@@ -268,7 +268,8 @@ void weekstats(WINDOW* win)
 		if (endweek < today && (c == ARROW_UP || c == ARROW_RIGHT))
 		{
 			endweek += SECONDS_PER_DAY;
-			startweek += SECONDS_PER_DAY;
+			startweek += SECONDS_PER_DAY;	
+			
 		}
 		localtime_r(&endweek, &endweek_tm);
 		localtime_r(&startweek, &startweek_tm);
@@ -404,12 +405,12 @@ void monthstats(WINDOW* win)
 			mvwprintw(win, 5, 2, "Studytime of December, %d", statmonth_tm.tm_year + 1900);
 			break;
 		}
-
+		mvwprintw_standout(win, 30, 2, "ENTER to quit", 0, 0);
 		display_monthstats(win, statmonth_tm);
 		wrefresh(win);
 
 		c = wgetch(win);
-		if (c == 'q') break;
+		if (c == '\n') break;
 		if (c == ARROW_DOWN || c == ARROW_LEFT)
 		{
 			if (statmonth_tm.tm_mon > JANUARY) // 2월~12월
