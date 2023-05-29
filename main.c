@@ -283,7 +283,7 @@ void main_screen(WINDOW* win, int arrow_select)
 	mvwprintw_standout(win, 17, 2, "2. Display stats", 2, arrow_select);
 	mvwprintw_standout(win, 19, 2, "3. Group", 3, arrow_select);
 	mvwprintw_standout(win, 21, 2, "4. Settings", 4, arrow_select);
-	mvwprintw_standout(win, 23, 2, "5. Exit", 5, arrow_select);
+	mvwprintw_standout(win, 30, 2, "- Exit", 5, arrow_select);
 	
 	wrefresh(win);
 }
@@ -293,6 +293,14 @@ void mvwprintw_standout(WINDOW* win, int y, int x, char* str, int line_num, int 
 	if(line_num == select)
 		wstandout(win);
 	mvwprintw(win, y, x, "%s", str);
+	wstandend(win);
+}
+
+void wprintw_standout(WINDOW* win, char* str, int line_num, int select)
+{
+	if(line_num == select)
+		wstandout(win);
+	wprintw(win, "%s", str);
 	wstandend(win);
 }
 
@@ -1233,7 +1241,7 @@ void menu4()
 
 void menu4_1(WINDOW* win)
 {
-	display_profile(win);
+	myprofile(win);
 }
 
 void menu4_2(WINDOW* win)
