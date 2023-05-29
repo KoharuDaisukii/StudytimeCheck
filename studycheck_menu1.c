@@ -472,7 +472,7 @@ void menu1(){
 
 	box(win, '|', '-');
     wrefresh(win);
-	mvwprintw(win, 3, 3, "Press spacebar to measure study time."); 
+	mvwprintw(win, 3, 3, "Press 'spacebar' to measure study time."); 
     mvwprintw(win,30, 45, "quit: q"); 
     wrefresh(win);
 
@@ -519,7 +519,7 @@ void menu1(){
          	wrefresh(win);
 		 	mvwprintw(win, 15, 24, "Studying"); 
          	wrefresh(win);
-		 	mvwprintw(win,30, 30, "Press spacebar to stop");
+		 	mvwprintw(win,30, 30, "Press 'spacebar' to stop");
 		 	wrefresh(win);
 			while(1){
 				mvwprintw(win, 15, 32, ".");
