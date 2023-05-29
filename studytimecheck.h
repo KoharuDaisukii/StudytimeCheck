@@ -43,7 +43,8 @@ void display_monthstats(WINDOW* win, struct tm statmonth_tm);
 
 void settings_select(WINDOW* win);
 void settings_screen(WINDOW* win, int arrow_select);
-void display_profile(WINDOW* win);
+void myprofile(WINDOW* win);
+void display_profile(WINDOW* win, Studyuser s_user, int arrow_select);
 void display_help(WINDOW* win);
 void delete_account(WINDOW* win);
 
