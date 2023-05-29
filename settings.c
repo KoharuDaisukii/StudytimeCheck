@@ -40,7 +40,7 @@ void settings_screen(WINDOW* win, int arrow_select)
 	mvwprintw_standout(win, 6, 2, "1. My profile", 1, arrow_select);
 	mvwprintw_standout(win, 8, 2, "2. help", 2, arrow_select);
 	mvwprintw_standout(win, 10, 2, "3. Delete account", 3, arrow_select);
-	mvwprintw_standout(win, 30, 2, "- Quit", 4, arrow_select);
+	mvwprintw_standout(win, 31, 2, "- Quit", 4, arrow_select);
 	wrefresh(win);
 }
 
@@ -52,7 +52,7 @@ void myprofile(WINDOW* win)
 	read(ufd, &s_user, sizeof(Studyuser));
 
 	struct tm* tm_ptr;
-	wfill(win, 3, 2, 30, 59, " ");
+	wfill(win, 3, 2, 31, 59, " ");
 	mvwprintw(win, 3, 2, "Settings - %s\'s profile", s_user.user_ID);
 	
 	int c;
@@ -85,7 +85,7 @@ void display_profile(WINDOW* win, Studyuser s_user, int arrow_select)
 	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
 	mvwprintw_standout(win, 13, 2, "Last login time: ", 4, arrow_select); // struct tm -> human_readable
 	wprintw_standout(win, asctime(tm_ptr), 4, arrow_select);
-	mvwprintw_standout(win, 30, 2, "ENTER to quit", 5, arrow_select);
+	mvwprintw_standout(win, 31, 2, "ENTER to quit", 5, arrow_select);
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 }
