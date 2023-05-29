@@ -283,7 +283,7 @@ void main_screen(WINDOW* win, int arrow_select)
 	mvwprintw_standout(win, 17, 2, "2. Display stats", 2, arrow_select);
 	mvwprintw_standout(win, 19, 2, "3. Group", 3, arrow_select);
 	mvwprintw_standout(win, 21, 2, "4. Settings", 4, arrow_select);
-	mvwprintw_standout(win, 30, 2, "- Exit", 5, arrow_select);
+	mvwprintw_standout(win, 31, 2, "- Exit", 5, arrow_select);
 	
 	wrefresh(win);
 }
