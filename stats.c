@@ -80,10 +80,10 @@ void stats_screen(WINDOW* win, int arrow_select)
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	
 	mvwprintw(win, 3, 2, "Display stats");
-	mvwprintw_standout(win, 6, 2, "1. Today's Studytime", 1, arrow_select);
-	mvwprintw_standout(win, 8, 2, "2. This week's Studytime", 2, arrow_select);
-	mvwprintw_standout(win, 10, 2, "3. This month's Studytime", 3, arrow_select);
-	mvwprintw_standout(win, 35, 42, "Enter to quit", 4, arrow_select);
+	mvwprintw_standout(win, 7, 2, "1. Today's Studytime", 1, arrow_select);
+	mvwprintw_standout(win, 10, 2, "2. This week's Studytime", 2, arrow_select);
+	mvwprintw_standout(win, 13, 2, "3. This month's Studytime", 3, arrow_select);
+	wprintw_quit(win, 4, arrow_select);
 	wrefresh(win);
 }
 
@@ -110,7 +110,7 @@ void daystats(WINDOW* win)
 			mvwprintw(win, 5, 2, "Studytime during Today(%04d-%02d-%02d)", stat_year, stat_month, stat_day);
 		else
 			mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d           ", stat_year, stat_month, stat_day);
-		mvwprintw_standout(win, 35, 42, "ENTER to quit", 0, 0);	
+		wprintw_quit(win, 0, 0);	
 		wfill(win, 6, 1, 34, 56, " ");
 		display_daystats(win, stat_year, stat_month, stat_day, 0);
 		c = wgetch(win);	
@@ -276,7 +276,7 @@ void weekstats(WINDOW* win)
 		wfill(win, 6, 1, 34, 55, " ");
 		mvwprintw(win, 3, 2, "Display stats (Arrow keys for control)");
 		mvwprintw(win, 5, 2, "Studytime of %04d-%02d-%02d ~ %04d-%02d-%02d", startweek_tm.tm_year + 1900, startweek_tm.tm_mon + 1, startweek_tm.tm_mday, endweek_tm.tm_year + 1900, endweek_tm.tm_mon + 1, endweek_tm.tm_mday);
-		mvwprintw_standout(win, 35, 42, "ENTER to quit", 8, arrow_select);
+		wprintw_quit(win, 8, arrow_select);
 		display_weekstats(win, endweek, arrow_select);
 
 		c = wgetch(win);
@@ -431,7 +431,7 @@ void monthstats(WINDOW* win)
 			month_calculated = 1;
 		}
 		mvwprintw(win, 5, 2, "Studytime of %s, %d", monthname[statmonth_tm.tm_mon + 1], statmonth_tm.tm_year + 1900);
-		mvwprintw_standout(win, 35, 42, "ENTER to quit", arrow_select, monthlast + 1);
+		wprintw_quit(win, monthlast + 1, arrow_select);
 		display_monthstats(win, statmonth_tm, arrow_select);
 		
 		c = wgetch(win);
