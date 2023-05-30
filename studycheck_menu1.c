@@ -581,6 +581,7 @@ void menu1(){
 			continue;
                    	}
 		        else {
+			lseek(file, -sizeof(timelog), SEEK_CUR);
                         write(file, &tlog, sizeof(timelog));
                         close(file);
                         break; 
