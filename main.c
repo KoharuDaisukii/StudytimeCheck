@@ -317,6 +317,159 @@ void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
 			mvwprintw(win, i, j, "%s", ch);
 }
 
+timelog tlog; //전역에 선언해야함. 그래야 sigalrm에도 작동.
+int file;//전역에 선언해야함. 그래야 sigalrm에도 작동.
+int alarmcheck=0; //덮어쓰기 or 새로 쓰기 구분 위함.
+
+void alarm_to_write(int signum){
+
+	tlog.finish_time = time(NULL);
+    struct tm *time_info_end = localtime(&tlog.finish_time);
+    tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
+	
+	if(alarmcheck==0){ //처음 쓴다
+		write(file, &tlog, sizeof(timelog));
+	    alarmcheck=1;
+	    alarm(30);
+	}
+
+	else if(alarmcheck==1){ //덮어쓴다.(갱신)
+		lseek(file, -sizeof(timelog), SEEK_CUR); //덮어쓰기
+		write(file, &tlog, sizeof(timelog));
+	    alarmcheck=1;
+	    alarm(30);
+	}
+}
+
+void menu1(){
+   int usersFd;
+   char filename[100];
+   Studyuser studyuser;
+   struct tm *time_info_start, *time_info_end;
+   int key, check = 0;
+   char start_time_str[20];
+   char finish_time_str[20];
+   char studytime_str[20];
+
+   WINDOW* win = newwin(34, 60, 1, 1);
+
+    box(win, '|', '-');
+    wrefresh(win);
+    mvwprintw(win, 2, 3, "Please enter the subject you want to study ");
+	mvwprintw(win, 4, 3,": ");
+    wrefresh(win);
+
+	echo();
+    wgetstr(win, tlog.subject); //과목받기
+    werase(win); 
+
+	box(win, '|', '-');
+    wrefresh(win);
+	mvwprintw(win, 3, 3, "Press spacebar to measure study time."); 
+    mvwprintw(win,30, 45, "quit: q"); 
+    wrefresh(win);
+
+
+    while (1){
+		key = getch();
+    	if (key == 'q')
+      	{
+        	wclear(win);
+        	endwin();
+        	clear();
+        	wrefresh(win);
+        //exit(0);
+        	return;
+      	}
+
+      	if (key == ' ')
+      	{
+		if (check == 0)
+        	{
+            	tlog.start_time = time(NULL); // 현재 시간으로 할당
+            	time_info_start = localtime(&tlog.start_time);
+            	sprintf(filename, "%04d%02d%02d.txt", time_info_start->tm_year + 1900, time_info_start->tm_mon + 1, time_info_start->tm_mday);
+
+               	chdir(UID);
+               	file = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+               	if (file == -1)
+               	{
+               		printf("file open|create error.\n");
+               	   	return;
+               	}
+                check = 1;
+            
+        	}
+
+		 	
+		
+      	}
+
+      	if (check == 1)
+      	{
+		signal(SIGALRM,alarm_to_write);
+		alarm(30);
+        	wclear(win);
+		 	
+			while(1){
+				box(win, '|', '-');
+         			wrefresh(win);
+		 		mvwprintw(win, 15, 24, "Studying"); 
+         			wrefresh(win);
+		 		mvwprintw(win,30, 30, "Press spacebar to stop");
+		 		wrefresh(win);
+				mvwprintw(win, 15, 32, ".");
+				wrefresh(win);
+				sleep(1);
+				mvwprintw(win, 15, 33, ".");
+				wrefresh(win);
+				sleep(1);
+				mvwprintw(win, 15, 34, ".");
+				wrefresh(win);
+				sleep(1);
+				mvwprintw(win, 15, 32, "   ");
+				wrefresh(win);
+				sleep(1);
+
+                	nodelay(win, TRUE); // 키 입력 비차단 모드 설정
+                	key = wgetch(win);
+         		if (key == ' ')
+         		{
+            		tlog.finish_time = time(NULL);
+            		time_info_end = localtime(&tlog.finish_time);
+            		tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
+            		int hours = tlog.studytime / 3600;             // 시
+            		int minutes = (int)(tlog.studytime / 60) % 60; // 분
+            		int seconds_ = (int)tlog.studytime % 60;       // 초
+			if (tlog.studytime <=30.0) {
+                        // 공부시간이 30초 이하인 경우 경고 메세지 출력
+                        wclear(win);
+			box(win, '|', '-');
+         		wrefresh(win);
+                        mvwprintw(win, 15, 17, "Study time is too short!");
+                        wrefresh(win);
+                        sleep(1);
+                        werase(win);
+                        wrefresh(win);
+			continue;
+                   	}
+		        else {
+			lseek(file, -sizeof(timelog), SEEK_CUR);
+                        write(file, &tlog, sizeof(timelog));
+                        close(file);
+                        break; 
+                    	}
+		     }
+				
+      		}	
+			break;
+		}
+   	}
+   	chdir("..");
+   	endwin();
+   	clear(); //다 지우기
+}
+
 void menu2()
 {
 	WINDOW* win = newwin(38, 60, 1, 1);
