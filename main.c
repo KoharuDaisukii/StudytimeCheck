@@ -81,13 +81,13 @@ void wcleardel(WINDOW* win)
 
 int arrow_convert(int key_select, int arrow_select, int bound)
 {
-	if(key_select == ARROW_DOWN || key_select == ARROW_RIGHT)
+	if(key_select == ARROW_DOWN)
 	{
 		arrow_select++;
 		if(arrow_select > bound)
 			arrow_select = 1;
 	}
-	if(key_select == ARROW_UP || key_select == ARROW_LEFT)
+	if(key_select == ARROW_UP)
 	{
 		arrow_select--;
 		if(arrow_select < 1)
@@ -306,6 +306,7 @@ void wprintw_standout(WINDOW* win, char* str, int line_num, int select)
 
 void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
 {
+	standend();
 	for(int i=y1; i<=y2; i++)
 		for(int j=x1; j<=x2; j++)
 			mvwprintw(win, i, j, "%s", ch);
@@ -313,7 +314,7 @@ void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
 
 void menu2()
 {
-	WINDOW* win = newwin(34, 60, 1, 1);
+	WINDOW* win = newwin(38, 60, 1, 1);
 	keypad(win, true);
 	
 	stats_select(win);
