@@ -575,7 +575,7 @@ void menu1(){
          		wrefresh(win);
                         mvwprintw(win, 15, 17, "Study time is too short!");
                         wrefresh(win);
-                        sleep(2);
+                        sleep(1);
                         werase(win);
                         wrefresh(win);
 			continue;
