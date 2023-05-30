@@ -29,6 +29,7 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 extern char UID[11];
 extern int user_dead;
 
+void wprintw_quit(WINDOW*, int line_num, int arrow_select);
 void wdraw_timebar(WINDOW* win, int y_start, int x_start);
 void stats_select(WINDOW* win);
 void stats_screen(WINDOW* win, int arrow_select);

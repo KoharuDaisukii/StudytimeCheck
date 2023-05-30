@@ -37,10 +37,10 @@ void settings_screen(WINDOW* win, int arrow_select)
 {
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	mvwprintw(win, 3, 2, "Settings");
-	mvwprintw_standout(win, 6, 2, "1. My profile", 1, arrow_select);
-	mvwprintw_standout(win, 8, 2, "2. help", 2, arrow_select);
-	mvwprintw_standout(win, 10, 2, "3. Delete account", 3, arrow_select);
-	mvwprintw_standout(win, 31, 2, "- Quit", 4, arrow_select);
+	mvwprintw_standout(win, 7, 2, "1. My profile", 1, arrow_select);
+	mvwprintw_standout(win, 10, 2, "2. help", 2, arrow_select);
+	mvwprintw_standout(win, 13, 2, "3. Delete account", 3, arrow_select);
+	wprintw_quit(win, 4, arrow_select);
 	wrefresh(win);
 }
 
@@ -62,9 +62,9 @@ void myprofile(WINDOW* win)
 		display_profile(win, s_user, arrow_select);
 		c = wgetch(win);
 		arrow_select = arrow_convert(c, arrow_select, 5);
-
-		if (c == '5' || (c == '\n' && arrow_select == 5)) break;
-		if (user_dead == 1) break;
+		
+		if(c == '5' || (c == '\n' && arrow_select == 5)) break;
+		if(user_dead == 1) break;
 	}
 
 	wclear(win);
@@ -73,19 +73,19 @@ void myprofile(WINDOW* win)
 
 void display_profile(WINDOW* win, Studyuser s_user, int arrow_select)
 {
-	mvwprintw_standout(win, 6, 2, "User ID: ", 1, arrow_select);
+	mvwprintw_standout(win, 7, 2, "User ID: ", 1, arrow_select);
 	wprintw_standout(win, s_user.user_ID, 1, arrow_select);
-	mvwprintw_standout(win, 8, 2, "Group ID: ", 2, arrow_select);
+	mvwprintw_standout(win, 10, 2, "Group ID: ", 2, arrow_select);
 	wprintw_standout(win, s_user.group_ID, 2, arrow_select);
 
 	struct tm* tm_ptr = localtime(&(s_user.signup)); // time_t-> struct tm
 
-	mvwprintw_standout(win, 11, 2, "Sign up time: ", 3, arrow_select); // struct tm -> human_readable
+	mvwprintw_standout(win, 14, 2, "Sign up time: ", 3, arrow_select); // struct tm -> human_readable
 	wprintw_standout(win, asctime(tm_ptr), 3, arrow_select); // struct tm -> human_readable
 	tm_ptr = localtime(&(s_user.lastlogin)); // time_t -> struct tm
-	mvwprintw_standout(win, 13, 2, "Last login time: ", 4, arrow_select); // struct tm -> human_readable
+	mvwprintw_standout(win, 17, 2, "Last login time: ", 4, arrow_select); // struct tm -> human_readable
 	wprintw_standout(win, asctime(tm_ptr), 4, arrow_select);
-	mvwprintw_standout(win, 31, 2, "ENTER to quit", 5, arrow_select);
+	wprintw_quit(win, 5, arrow_select);
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 }
@@ -121,8 +121,8 @@ void delete_account(WINDOW* win)
 	char yesno;
 	curs_set(1);
 	
-	mvwprintw(win, 10, 2, "3. Delete account");
-	mvwprintw_standout(win, 15, 2, "Delete your account from StudytimeCheck?", 1, 1);
+	mvwprintw(win, 13, 2, "3. Delete account");
+	mvwprintw_standout(win, 17, 2, "Delete your account from StudytimeCheck?", 1, 1);
 	wprintw(win, " (Y/N) ");
 	wrefresh(win);
 	while (1)
@@ -131,10 +131,10 @@ void delete_account(WINDOW* win)
 		yesno = toupper(yesno);
 		if (yesno == 'Y')
 		{
-			mvwprintw(win, 15, 2, "Delete your account from StudytimeCheck? (Y/N) ", 1, 1);
-			mvwprintw_standout(win, 17, 2, "Enter your ID if you really want to leave.", 2, 2);
-			mvwprintw(win, 17, 46, "          )");
-			mvwprintw(win, 17, 45, "(");
+			mvwprintw(win, 17, 2, "Delete your account from StudytimeCheck? (Y/N) ", 1, 1);
+			mvwprintw_standout(win, 19, 2, "Enter your ID if you really want to leave.", 2, 2);
+			mvwprintw(win, 19, 46, "          )");
+			mvwprintw(win, 19, 45, "(");
 			
 			wrefresh(win);
 			char input[11] = "\0";
@@ -147,18 +147,20 @@ void delete_account(WINDOW* win)
 				{
 					if (i < 10) // 10글자 이상 입력 blocking
 					{
-						mvwprintw(win, 17, 46 + i, "%c", input_c);
+						mvwprintw(win, 19, 46 + i, "%c", input_c);
 						input[i++] = input_c;
 						input[i] = '\0';
 					}
 				}
 				if ((input_c == '\b' || input_c == 263) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
 				{
-					mvwprintw(win, 17, 46 + --i, " ");
-					move(17, 1 + i);
+					mvwprintw(win, 19, 46 + --i, " ");
+					move(19, 1 + i);
 				}
 				if (input_c == '\n') // 엔터 입력
 				{
+					mvwprintw(win, 19, 2, "Enter your ID if you really want to leave.");
+					curs_set(0);
 					if (strcmp(input, UID) == 0) // 올바르게 입력
 					{
 						// 기존의 ID 정보를 DEAD_USER로 덮어쓰기
@@ -176,17 +178,13 @@ void delete_account(WINDOW* win)
 							perror("rmdir_r");
 							exit(50);
 						}
-						mvwprintw(win, 18, 2, "Deactivated your account. See you Again...");
-						wrefresh(win);
-						sleep(2);
+						mvwprintw_standout(win, 22, 2, "Deactivated your account. See you Again...", 0, 0);
 						user_dead = 1; // 유저가 탈퇴했음.
 					}
 					else
-					{
-						mvwprintw(win, 18, 46, "Wrong ID!!");
-						wrefresh(win);
-						sleep(2);
-					}
+					mvwprintw_standout(win, 20, 46, "Wrong ID!!", 0, 0);
+					wrefresh(win);
+					sleep(2);
 					break;
 				}
 				wrefresh(win);
@@ -195,12 +193,13 @@ void delete_account(WINDOW* win)
 		}
 		if (yesno == 'N')
 		{
+			curs_set(0);
 			break;
 		}
 		wrefresh(win);
 	}
 	wclear(win);
 	wrefresh(win);
-	noecho(); cbreak(); curs_set(0);
+	noecho(); cbreak(); 
 	return;
 }

@@ -96,6 +96,11 @@ int arrow_convert(int key_select, int arrow_select, int bound)
 	return arrow_select;
 }
 
+void wprintw_quit(WINDOW* win, int line_num, int arrow_select)
+{
+	mvwprintw_standout(win, 35, 42, "Enter to quit", line_num, arrow_select);
+}
+
 void main_screen(WINDOW* win, int arrow_select)
 {
 	int x = 3;
@@ -279,11 +284,11 @@ void main_screen(WINDOW* win, int arrow_select)
 	//M
 	
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
-	mvwprintw_standout(win, 15, 2, "1. Studytime Measuring", 1, arrow_select);
+	mvwprintw_standout(win, 14, 2, "1. Studytime Measuring", 1, arrow_select);
 	mvwprintw_standout(win, 17, 2, "2. Display stats", 2, arrow_select);
-	mvwprintw_standout(win, 19, 2, "3. Group", 3, arrow_select);
-	mvwprintw_standout(win, 21, 2, "4. Settings", 4, arrow_select);
-	mvwprintw_standout(win, 31, 2, "- Exit", 5, arrow_select);
+	mvwprintw_standout(win, 20, 2, "3. Group", 3, arrow_select);
+	mvwprintw_standout(win, 23, 2, "4. Settings", 4, arrow_select);
+	wprintw_quit(win, 5, arrow_select);
 	
 	wrefresh(win);
 }
@@ -1232,7 +1237,7 @@ void menu3_screen(WINDOW* win) {
 
 void menu4()
 {
-	WINDOW* win = newwin(34, 60, 1, 1);
+	WINDOW* win = newwin(38, 60, 1, 1);
 	keypad(win, TRUE);
 	
 	settings_select(win);
