@@ -34,7 +34,7 @@ void menu2_3(WINDOW* win);
 
 void menu3();
 void menu3_create(WINDOW* win);
-void menu3_screen(WINDOW* win);
+void menu3_screen(WINDOW* win, int arrow_select);
 void menu3_join(WINDOW* win);
 void menu3_leave(WINDOW* win);
 void menu3_rank(WINDOW* win);
@@ -503,14 +503,17 @@ void menu3() {
 	WINDOW* win = newwin(34, 60, 1, 1);
 
 	char menu;
+	int arrow_select = 1;
 	while (1) {
-		menu3_screen(win);
-		menu = getch();
-		if (menu == '1') menu3_create(win);
-		if (menu == '2') menu3_join(win);
-		if (menu == '3') menu3_leave(win);
-		if (menu == '4') menu3_rank(win);
-		if (menu == '5') {
+		menu3_screen(win, arrow_select);
+		wrefresh(win);
+		menu = wgetch(win);
+		arrow_select = arrow_convert(menu, arrow_select, 5);
+		if (menu == '1' || (menu == '\n' && arrow_select == 1)) menu3_create(win);
+		if (menu == '2' || (menu == '\n' && arrow_select == 2)) menu3_join(win);
+		if (menu == '3' || (menu == '\n' && arrow_select == 3)) menu3_leave(win);
+		if (menu == '4' || (menu == '\n' && arrow_select == 4)) menu3_rank(win);
+		if (menu == '5' || (menu == '\n' && arrow_select == 5)) {
 			break;
 		}
 	}
@@ -611,6 +614,7 @@ void menu3_create(WINDOW* win) {
 			strcpy(add.group_name, groupid);
 			add.group_users = 1;
 
+
 			// 파일이 없어서 fd != -1 -> 파일 생성됨
 			if ((fd1 = open("group.txt", O_RDWR | O_CREAT | O_EXCL, 0755)) > 0) {
 				wrefresh(win);
@@ -677,10 +681,101 @@ void menu3_create(WINDOW* win) {
 	return;
 }
 
+void menu3_screen_join(WINDOW* win) {
+	
+	wclear(win);
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
+	wrefresh(win);
+	noecho();
+
+	// getcwd를 사용해서 ./users/no_group 인 것을 확인함
+	// ./users로 디렉토리 경로 변경
+	if (chdir("..") != 0) {
+		perror("chdir");
+		return;
+	}
+	// ./users 인 현재 디렉토리 열고
+	// group.txt 파일을 열고
+	int group_file = 0;
+	DIR * u_dir = opendir(".");
+	struct dirent* u_ent;
+	if (u_dir != NULL) {
+		while ((u_ent = readdir(u_dir)) != NULL) {
+			if (u_ent->d_type == DT_REG && strcmp(u_ent->d_name, "group.txt") == 0) {
+				group_file = 1;
+			}
+		}
+	}
+	closedir(u_dir);
+
+	int fd;
+	// group.txt가 있는 경우
+	if (group_file = 1) {
+		fd = open("group.txt", O_RDONLY);
+
+		// 커서 맨 앞으로
+		lseek(fd, 0, SEEK_SET);
+
+		// 읽을 구조체 선언하기
+		groupinfo rd;
+
+		// 저장할 구조체 배열 선언하기
+		groupinfo save[12];
+
+		int index = 0;
+		// group.txt 파일 읽기
+		// groupinfo 단위로 읽어옴
+		while (read(fd, &rd, sizeof(groupinfo))) {
+			strcpy(save[index].group_name,rd.group_name);
+			save[index].group_users = rd.group_users;
+			index++;
+		}
+		int ad = 0;
+		int a = 0;
+		mvwprintw(win, 3, 2, "Here is a list of groups you can join !");
+		for (int i = 0; i < index; i++) {
+			mvwprintw(win, i+5+a, 2, "%d : %s ( %d ) ", i+1, save[i].group_name, save[i].group_users);
+			a++;
+			if (i == index - 1) {
+				ad = a;
+			}
+		}
+		mvwprintw_standout(win, index + ad + 7, 2, "ENTER to join", 1, 1);
+	}
+	else {
+		mvwprintw(win, 5, 2, "No one has a GROUP !!!");
+		mvwprintw(win, 6, 2, "CREATE a group first then try again !");
+		mvwprintw(win, 8, 2, "Returning to group menu...");
+		wrefresh(win);
+
+		for (int t = 1; t <= 3; t++) {
+			sleep(1);
+			int y = 5 * t - 2;
+			mvwprintw(win, 10, y, " %d ...", 4 - t);
+			wrefresh(win);
+		}
+		sleep(1);
+		wclear(win);
+		return;
+	}
+	// 사용자에게 보여줌
+	
+
+}
+
 void menu3_join(WINDOW* win) {
 
+	
+
+	int c;
+	while (1) {
+		menu3_screen_join(win);
+		c = wgetch(win);
+		if (c == '\n') break;
+	}
+
 	wclear(win);
-	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
 	wrefresh(win);
 	echo();
 
@@ -1244,147 +1339,20 @@ void menu3_rank(WINDOW* win) {
 	return;
 
 }
-void menu3_screen(WINDOW* win) {
+void menu3_screen(WINDOW* win, int arrow_select) {
 	int x = 3;
 	int y = 7;
 
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 
-	//G
-	mvwprintw(win, x, y, "*");
-	mvwprintw(win, x, y + 1, "*");
-	mvwprintw(win, x, y + 2, "*");
-	mvwprintw(win, x + 1, y - 1, "*");
-	mvwprintw(win, x + 2, y - 1, "*");
-	mvwprintw(win, x + 2, y + 1, "*");
-	mvwprintw(win, x + 2, y + 2, "*");
-	mvwprintw(win, x + 2, y + 3, "*");
-	mvwprintw(win, x + 3, y - 1, "*");
-	mvwprintw(win, x + 3, y + 3, "*");
-	mvwprintw(win, x + 4, y, "*");
-	mvwprintw(win, x + 4, y + 1, "*");
-	mvwprintw(win, x + 4, y + 2, "*");
+	mvwprintw(win, x , y, "Welcome to GROUP MENU !");
+	mvwprintw(win, x + 1, y, "Select group menu that you want.");
 
-	//R
-	mvwprintw(win, x, y + 5, "*");
-	mvwprintw(win, x + 1, y + 5, "*");
-	mvwprintw(win, x + 2, y + 5, "*");
-	mvwprintw(win, x + 3, y + 5, "*");
-	mvwprintw(win, x + 4, y + 5, "*");
-	mvwprintw(win, x, y + 6, "*");
-	mvwprintw(win, x, y + 7, "*");
-	mvwprintw(win, x + 1, y + 8, "*");
-	mvwprintw(win, x + 2, y + 6, "*");
-	mvwprintw(win, x + 2, y + 7, "*");
-	mvwprintw(win, x + 3, y + 7, "*");
-	mvwprintw(win, x + 4, y + 8, "*");
-
-	//O
-	mvwprintw(win, x, y + 11, "*");
-	mvwprintw(win, x, y + 12, "*");
-	mvwprintw(win, x, y + 13, "*");
-	mvwprintw(win, x + 1, y + 10, "*");
-	mvwprintw(win, x + 2, y + 10, "*");
-	mvwprintw(win, x + 3, y + 10, "*");
-	mvwprintw(win, x + 4, y + 11, "*");
-	mvwprintw(win, x + 4, y + 12, "*");
-	mvwprintw(win, x + 4, y + 13, "*");
-	mvwprintw(win, x + 3, y + 14, "*");
-	mvwprintw(win, x + 2, y + 14, "*");
-	mvwprintw(win, x + 1, y + 14, "*");
-
-	//U
-	mvwprintw(win, x, y + 16, "*");
-	mvwprintw(win, x + 1, y + 16, "*");
-	mvwprintw(win, x + 2, y + 16, "*");
-	mvwprintw(win, x + 3, y + 16, "*");
-	mvwprintw(win, x + 4, y + 17, "*");
-	mvwprintw(win, x + 4, y + 18, "*");
-	mvwprintw(win, x + 4, y + 19, "*");
-	mvwprintw(win, x + 3, y + 20, "*");
-	mvwprintw(win, x + 2, y + 20, "*");
-	mvwprintw(win, x + 1, y + 20, "*");
-	mvwprintw(win, x, y + 20, "*");
-
-	//P
-	mvwprintw(win, x, y + 22, "*");
-	mvwprintw(win, x, y + 23, "*");
-	mvwprintw(win, x, y + 24, "*");
-	mvwprintw(win, x, y + 25, "*");
-	mvwprintw(win, x + 1, y + 22, "*");
-	mvwprintw(win, x + 1, y + 26, "*");
-	mvwprintw(win, x + 2, y + 22, "*");
-	mvwprintw(win, x + 2, y + 23, "*");
-	mvwprintw(win, x + 2, y + 24, "*");
-	mvwprintw(win, x + 2, y + 25, "*");
-	mvwprintw(win, x + 3, y + 22, "*");
-	mvwprintw(win, x + 4, y + 22, "*");
-
-	//M
-	mvwprintw(win, x + 7, y + 2, "*");
-	mvwprintw(win, x + 8, y + 2, "*");
-	mvwprintw(win, x + 9, y + 2, "*");
-	mvwprintw(win, x + 10, y + 2, "*");
-	mvwprintw(win, x + 6, y + 3, "*");
-	mvwprintw(win, x + 7, y + 4, "*");
-	mvwprintw(win, x + 8, y + 4, "*");
-	mvwprintw(win, x + 6, y + 5, "*");
-	mvwprintw(win, x + 7, y + 6, "*");
-	mvwprintw(win, x + 8, y + 6, "*");
-	mvwprintw(win, x + 9, y + 6, "*");
-	mvwprintw(win, x + 10, y + 6, "*");
-
-	//E
-	mvwprintw(win, x + 6, y + 8, "*");
-	mvwprintw(win, x + 6, y + 9, "*");
-	mvwprintw(win, x + 6, y + 10, "*");
-	mvwprintw(win, x + 6, y + 11, "*");
-	mvwprintw(win, x + 7, y + 8, "*");
-	mvwprintw(win, x + 8, y + 8, "*");
-	mvwprintw(win, x + 8, y + 9, "*");
-	mvwprintw(win, x + 8, y + 10, "*");
-	mvwprintw(win, x + 8, y + 11, "*");
-	mvwprintw(win, x + 9, y + 8, "*");
-	mvwprintw(win, x + 10, y + 8, "*");
-	mvwprintw(win, x + 10, y + 9, "*");
-	mvwprintw(win, x + 10, y + 10, "*");
-	mvwprintw(win, x + 10, y + 11, "*");
-
-	//N
-	mvwprintw(win, x + 6, y + 13, "*");
-	mvwprintw(win, x + 7, y + 13, "*");
-	mvwprintw(win, x + 8, y + 13, "*");
-	mvwprintw(win, x + 9, y + 13, "*");
-	mvwprintw(win, x + 10, y + 13, "*");
-	mvwprintw(win, x + 7, y + 14, "*");
-	mvwprintw(win, x + 8, y + 15, "*");
-	mvwprintw(win, x + 9, y + 16, "*");
-	mvwprintw(win, x + 6, y + 17, "*");
-	mvwprintw(win, x + 7, y + 17, "*");
-	mvwprintw(win, x + 8, y + 17, "*");
-	mvwprintw(win, x + 9, y + 17, "*");
-	mvwprintw(win, x + 10, y + 17, "*");
-
-	//U
-	mvwprintw(win, x + 6, y + 19, "*");
-	mvwprintw(win, x + 7, y + 19, "*");
-	mvwprintw(win, x + 8, y + 19, "*");
-	mvwprintw(win, x + 9, y + 19, "*");
-	mvwprintw(win, x + 10, y + 20, "*");
-	mvwprintw(win, x + 10, y + 21, "*");
-	mvwprintw(win, x + 10, y + 22, "*");
-	mvwprintw(win, x + 6, y + 23, "*");
-	mvwprintw(win, x + 7, y + 23, "*");
-	mvwprintw(win, x + 8, y + 23, "*");
-	mvwprintw(win, x + 9, y + 23, "*");
-
-	mvwprintw(win, x + 14, y, "You selected Group Menu !");
-	mvwprintw(win, x + 15, y, "Select group menu that you want.");
-	mvwprintw(win, x + 17, y, "1. Group Create");
-	mvwprintw(win, x + 18, y, "2. Group Join");
-	mvwprintw(win, x + 19, y, "3. Group Leave");
-	mvwprintw(win, x + 20, y, "4. Group Ranking");
-	mvwprintw(win, x + 21, y, "5. Go back");
+	mvwprintw_standout(win, x + 4, y, "1. Group Create" ,1, arrow_select);
+	mvwprintw_standout(win, x + 6, y, "2. Group Join", 2, arrow_select);
+	mvwprintw_standout(win, x + 8, y, "3. Group Leave", 3, arrow_select);
+	mvwprintw_standout(win, x + 10, y, "4. Group Ranking", 4, arrow_select);
+	mvwprintw_standout(win, x + 12, y, "5. Go back", 5, arrow_select);
 	wrefresh(win);
 }
 
