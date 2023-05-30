@@ -17,7 +17,7 @@ char UID[11];
 
 void login(int argc, char* argv[])
 {
-	ID_check(argc, argv);
+	exist_IDerror(argc, argv);
 	set_forFirstRun();
 	strcpy(UID, argv[1]); 	
 	
@@ -106,33 +106,54 @@ void login(int argc, char* argv[])
 	return;
 }
 
-void ID_check(int argc, char* argv[])
+void exist_IDerror(int argc, char* argv[])
 {
-	if (argc == 1) // 아이디 입력 안 함
+	int ID_result = ID_check(argc, argv);
+	if (ID_result == 1) // 아이디 입력 안 함
 	{
 		fprintf(stderr, "아이디를 입력해주세요. Usage: ./StudytimeCheck YOUR_ID\n");
 		exit(1);
 	}
-	else if (strlen(argv[1]) >= 11) // 아이디 10글자 이하로 입력 안 함
+	else if (ID_result == 2) // 아이디 10글자 이하로 입력 안 함
 	{
 		fprintf(stderr, "아이디는 10글자 이하로 입력해주세요.\n");
 		exit(2);
 	}
-	else if (argc >= 3) // 쓸데없는 것 입력함
+	else if (ID_result == 3) // 쓸데없는 것 입력함
 	{
 		fprintf(stderr, "실행파일 이름과 아이디만 입력해주세요. Usage: ./StudytimeCheck YOUR_ID\n");
 		exit(3);
+	}
+	else if(ID_result == 4)
+	{
+		fprintf(stderr, "아이디는 알파벳이나 숫자만 입력 가능합니다.\n");
+		exit(4);
+	}
+}
+
+int ID_check(int argc, char* argv[])
+{
+	if (argc == 1) // 아이디 입력 안 함
+	{
+		return 1;
+	}
+	else if (strlen(argv[1]) >= 11) // 아이디 10글자 이하로 입력 안 함
+	{
+		return 2;
+	}
+	else if (argc >= 3) // 쓸데없는 것 입력함
+	{
+		return 3;
 	}
 	
 	for(int i=0; i<strlen(argv[1]); i++)
 	{
 		if(!isalnum(argv[1][i])) // 알파벳이나 숫자가 아니면
 		{
-			fprintf(stderr, "아이디는 알파벳이나 숫자만 입력 가능합니다.\n");
-			exit(4);
+			return 4;
 		}
 	}
-	return;
+	return 0;
 }
 
 WINDOW* initial_set()
@@ -140,7 +161,7 @@ WINDOW* initial_set()
 	initscr();
 	noecho();
 	curs_set(0);
-	WINDOW* win = newwin(34, 60, 1, 1);
+	WINDOW* win = newwin(38, 60, 1, 1);
 	keypad(win, true);
 	
 	return win;
