@@ -10,6 +10,7 @@
 #include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
 #include <curses.h>
 #include <time.h> // time, struct tm
+#include <signal.h>
 
 #define USERS_INFO_DIR "users"
 #define USERS_INFO_FILE "users.txt"
@@ -35,8 +36,7 @@ typedef struct Studyuser
 
 
 typedef struct timelog // 공부 시간 기록을 저장하는 구조체
-{
-	// Studyuser info; 
+{   // Studyuser info; 
 	char subject[30];
 	time_t start_time; // 공부 시작 시간
 	time_t finish_time; // 공부 종료 시간
@@ -443,21 +443,41 @@ void main_screen()
 	printw("5. Exit");
 	refresh();
 }
+//여기서부터 menu1 구현이니까 긁어쓰시면 됩니다.
+timelog tlog; //전역에 선언해야함. 그래야 sigalrm에도 작동.
+int file;//전역에 선언해야함. 그래야 sigalrm에도 작동.
+int alarmcheck=0; //덮어쓰기 or 새로 쓰기 구분 위함.
 
+void alarm_to_write(int signum){
+
+	tlog.finish_time = time(NULL);
+    struct tm *time_info_end = localtime(&tlog.finish_time);
+    tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
+	
+	if(alarmcheck==0){ //처음 쓴다
+		write(file, &tlog, sizeof(timelog));
+	    alarmcheck=1;
+	    alarm(30);
+	}
+
+	else if(alarmcheck==1){ //덮어쓴다.(갱신)
+		lseek(file, -sizeof(timelog), SEEK_CUR); //덮어쓰기
+		write(file, &tlog, sizeof(timelog));
+	    alarmcheck=1;
+	    alarm(30);
+	}
+	
+}
 void menu1(){
-   //WINDOW* win = newwin(34, 60, 1, 1);
    int usersFd;
    char filename[100];
    Studyuser studyuser;
-   timelog log;
-   int file;
    struct tm *time_info_start, *time_info_end;
    int key, check = 0;
    char start_time_str[20];
    char finish_time_str[20];
    char studytime_str[20];
-   //char *groupid = malloc(sizeof(char *) * MAX);
-   //clear(); //백지로 만들기
+
    WINDOW* win = newwin(34, 60, 1, 1);
 
     box(win, '|', '-');
@@ -467,12 +487,12 @@ void menu1(){
     wrefresh(win);
 
 	echo();
-    wgetstr(win, log.subject); //과목받기
+    wgetstr(win, tlog.subject); //과목받기
     werase(win); 
 
 	box(win, '|', '-');
     wrefresh(win);
-	mvwprintw(win, 3, 3, "Press 'spacebar' to measure study time."); 
+	mvwprintw(win, 3, 3, "Press spacebar to measure study time."); 
     mvwprintw(win,30, 45, "quit: q"); 
     wrefresh(win);
 
@@ -491,10 +511,10 @@ void menu1(){
 
       	if (key == ' ')
       	{
-			if (check == 0)
+		if (check == 0)
         	{
-            	log.start_time = time(NULL); // 현재 시간으로 할당
-            	time_info_start = localtime(&log.start_time);
+            	tlog.start_time = time(NULL); // 현재 시간으로 할당
+            	time_info_start = localtime(&tlog.start_time);
             	sprintf(filename, "%04d%02d%02d.txt", time_info_start->tm_year + 1900, time_info_start->tm_mon + 1, time_info_start->tm_mday);
 
                	chdir(UID);
@@ -514,14 +534,17 @@ void menu1(){
 
       	if (check == 1)
       	{
+		signal(SIGALRM,alarm_to_write);
+		alarm(30);
         	wclear(win);
-		 	box(win, '|', '-');
-         	wrefresh(win);
-		 	mvwprintw(win, 15, 24, "Studying"); 
-         	wrefresh(win);
-		 	mvwprintw(win,30, 30, "Press 'spacebar' to stop");
-		 	wrefresh(win);
+		 	
 			while(1){
+				box(win, '|', '-');
+         			wrefresh(win);
+		 		mvwprintw(win, 15, 24, "Studying"); 
+         			wrefresh(win);
+		 		mvwprintw(win,30, 30, "Press spacebar to stop");
+		 		wrefresh(win);
 				mvwprintw(win, 15, 32, ".");
 				wrefresh(win);
 				sleep(1);
@@ -535,23 +558,34 @@ void menu1(){
 				wrefresh(win);
 				sleep(1);
 
-                nodelay(win, TRUE); // 키 입력 비차단 모드 설정
-                key = wgetch(win);
+                	nodelay(win, TRUE); // 키 입력 비차단 모드 설정
+                	key = wgetch(win);
          		if (key == ' ')
          		{
-            		log.finish_time = time(NULL);
-            		time_info_end = localtime(&log.finish_time);
-            		log.studytime = difftime(log.finish_time, log.start_time);
-            		int hours = log.studytime / 3600;             // 시
-            		int minutes = (int)(log.studytime / 60) % 60; // 분
-            		int seconds_ = (int)log.studytime % 60;       // 초
-
-            		write(file, &log, sizeof(timelog));
-
-            		close(file);
-
-            		break;
-         		}
+            		tlog.finish_time = time(NULL);
+            		time_info_end = localtime(&tlog.finish_time);
+            		tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
+            		int hours = tlog.studytime / 3600;             // 시
+            		int minutes = (int)(tlog.studytime / 60) % 60; // 분
+            		int seconds_ = (int)tlog.studytime % 60;       // 초
+			if (tlog.studytime <=30.0) {
+                        // 공부시간이 30초 이하인 경우 경고 메세지 출력
+                        wclear(win);
+			box(win, '|', '-');
+         		wrefresh(win);
+                        mvwprintw(win, 15, 17, "Study time is too short!");
+                        wrefresh(win);
+                        sleep(2);
+                        werase(win);
+                        wrefresh(win);
+			continue;
+                   	}
+		        else {
+                        write(file, &tlog, sizeof(timelog));
+                        close(file);
+                        break; 
+                    	}
+		     }
 				
       		}	
 			break;
@@ -561,6 +595,7 @@ void menu1(){
    	endwin();
    	clear(); //다 지우기
 }
+//여기까지 긁어쓰세요.
 
 void menu2()
 {
