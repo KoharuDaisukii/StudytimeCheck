@@ -86,6 +86,7 @@ void display_profile(WINDOW* win, Studyuser s_user, int arrow_select)
 	mvwprintw_standout(win, 17, 2, "Last login time: ", 4, arrow_select); // struct tm -> human_readable
 	wprintw_standout(win, asctime(tm_ptr), 4, arrow_select);
 	wprintw_quit(win, 5, arrow_select);
+	
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	wrefresh(win);
 }
