@@ -11,9 +11,6 @@
 
 #define TEST 0
 
-void menu2_1(WINDOW*);
-void menu2_2(WINDOW*);
-void menu2_3(WINDOW*);
 void wsctotime_month(WINDOW* win, int seconds);
 
 int monthlast_calculator(int month);
@@ -66,9 +63,9 @@ void stats_select(WINDOW* win)
 		c = wgetch(win);
 		arrow_select = arrow_convert(c, arrow_select, 4);
 		if (c == 'q') break;
-		if (c == '1' || (c == '\n' && arrow_select == 1)) menu2_1(win);
-		if (c == '2' || (c== '\n' && arrow_select == 2)) menu2_2(win);
-		if (c == '3' || (c == '\n' && arrow_select == 3)) menu2_3(win);
+		if (c == '1' || (c == '\n' && arrow_select == 1)) daystats(win);
+		if (c == '2' || (c== '\n' && arrow_select == 2)) weekstats(win);
+		if (c == '3' || (c == '\n' && arrow_select == 3)) monthstats(win);
 		if (c == '4' || (c == '\n' && arrow_select == 4)) break;
 		if (user_dead == 1) break;
 	}
@@ -430,7 +427,7 @@ void monthstats(WINDOW* win)
 			arrow_select = monthlast + 1;
 			month_calculated = 1;
 		}
-		mvwprintw(win, 5, 2, "Studytime of %s, %d", monthname[statmonth_tm.tm_mon + 1], statmonth_tm.tm_year + 1900);
+		mvwprintw(win, 5, 2, "Studytime of %s, %d", monthname[statmonth_tm.tm_mon], statmonth_tm.tm_year + 1900);
 		wprintw_quit(win, monthlast + 1, arrow_select);
 		display_monthstats(win, statmonth_tm, arrow_select);
 		

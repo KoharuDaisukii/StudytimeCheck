@@ -42,6 +42,13 @@ void display_daystats(WINDOW* win, int year, int month, int day, int external);
 void display_weekstats(WINDOW* win, time_t today, int arrow_select);
 void display_monthstats(WINDOW* win, struct tm statmonth_tm, int arrow_select);
 
+void group_menuselect(WINDOW* win);
+void group_mainscreen(WINDOW* win, int arrow_select);
+void group_join(WINDOW* win);
+void group_create(WINDOW* win);
+void group_rank(WINDOW* win);
+void group_leave(WINDOW* win);
+
 void settings_select(WINDOW* win);
 void settings_screen(WINDOW* win, int arrow_select);
 void myprofile(WINDOW* win);

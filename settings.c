@@ -25,9 +25,9 @@ void settings_select(WINDOW* win)
 		c = wgetch(win);
 		arrow_select = arrow_convert(c, arrow_select, 4);
 		if (c == 'q') break;
-		if (c == '1' || (c == '\n' && arrow_select == 1)) menu4_1(win);
-		if (c == '2' || (c == '\n' && arrow_select == 2)) menu4_2(win);
-		if (c == '3' || (c == '\n' && arrow_select == 3)) menu4_3(win); 
+		if (c == '1' || (c == '\n' && arrow_select == 1)) myprofile(win);
+		if (c == '2' || (c == '\n' && arrow_select == 2)) display_help(win);
+		if (c == '3' || (c == '\n' && arrow_select == 3)) delete_account(win); 
 		if (c == '4' || (c == '\n' && arrow_select == 4)) break;
 		if (user_dead == 1) break;
 	}
@@ -38,7 +38,7 @@ void settings_screen(WINDOW* win, int arrow_select)
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
 	mvwprintw(win, 3, 2, "Settings");
 	mvwprintw_standout(win, 7, 2, "1. My profile", 1, arrow_select);
-	mvwprintw_standout(win, 10, 2, "2. help", 2, arrow_select);
+	mvwprintw_standout(win, 10, 2, "2. Help", 2, arrow_select);
 	mvwprintw_standout(win, 13, 2, "3. Delete account", 3, arrow_select);
 	wprintw_quit(win, 4, arrow_select);
 	wrefresh(win);
