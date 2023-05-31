@@ -1,7 +1,7 @@
 all: StudytimeCheck
 	
-StudytimeCheck: main.o login.o stats.o settings.o group.o
-	gcc -o StudytimeCheck main.o login.o stats.o settings.o group.o -lcurses
+StudytimeCheck: main.o login.o stats.o settings.o group_temp2.o
+	gcc -o StudytimeCheck main.o login.o stats.o settings.o group_temp2.o -lcurses
 	
 main.o: main.c studytimecheck.h varlib.h login.h
 	gcc -c main.c
@@ -15,8 +15,8 @@ stats.o: stats.c studytimecheck.h varlib.h
 settings.o: settings.c studytimecheck.h varlib.h	
 	gcc -c settings.c
 	
-group.o: group.c studytimecheck.h varlib.h login.h
-	gcc -c group.c
+group_temp2.o: group_temp2.c studytimecheck.h varlib.h login.h
+	gcc -c group_temp2.c
 	
 clean:
 	rm -f *.o
