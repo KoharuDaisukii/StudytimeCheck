@@ -317,7 +317,7 @@ void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
 		for(int j=x1; j<=x2; j++)
 			mvwprintw(win, i, j, "%s", ch);
 }
-
+/////여기서부터긁으세요.
 timelog tlog; //전역에 선언해야함. 그래야 sigalrm에도 작동.
 int file;//전역에 선언해야함. 그래야 sigalrm에도 작동.
 int alarmcheck=0; //덮어쓰기 or 새로 쓰기 구분 위함.
@@ -489,6 +489,7 @@ void menu1(){
    	endwin();
    	clear(); //다 지우기
 }
+/////여기까지 긁어요.
 
 void menu2()
 {
