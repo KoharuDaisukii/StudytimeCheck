@@ -172,12 +172,12 @@ void set_forFirstRun()
 	mkdir(USERS_INFO_DIR, 0755);
 	chdir(USERS_INFO_DIR);
 	int fd1 = open(USERS_INFO_FILE, O_RDWR | O_CREAT | O_EXCL, 0777);
-	if(fd1 == -1)
+	if(fd1 != -1)
 		close(fd1);
-	int fd2 = open(NO_GROUP, O_RDWR | O_CREAT | O_EXCL, 0777);
-	if(fd2 == -1)
+	int fd2 = open("group.txt", O_RDWR | O_CREAT | O_EXCL, 0777);
+	if(fd2 != -1)
 		close(fd2);
-	mkdir(NO_GROUP, 0755);
+	mkdir(NO_GROUP, 0777);
 }
 
 void unsetup()
