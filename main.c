@@ -96,186 +96,6 @@ void wprintw_quit(WINDOW* win, int line_num, int arrow_select)
 
 void main_screen(WINDOW* win, int arrow_select)
 {
-	int x = 3;
-	int  y = 0;
-	
-	
-	move(y, x);
-	printw("*");
-	move(y, x + 1);
-	printw("*");
-	move(y, x + 2);
-	printw("*");
-	move(y, x + 3);
-	printw("*");
-	move(y, x + 4);
-	printw("*");
-	move(y + 1, x);
-	printw("*");
-	move(y + 2, x);
-	printw("*");
-	move(y + 2, x + 1);
-	printw("*");
-	move(y + 2, x + 2);
-	printw("*");
-	move(y + 2, x + 3);
-	printw("*");
-	move(y + 2, x + 4);
-	printw("*");
-	move(y + 3, x + 4);
-	printw("*");
-	move(y + 4, x + 4);
-	printw("*");
-	move(y + 4, x + 3);
-	printw("*");
-	move(y + 4, x + 2);
-	printw("*");
-	move(y + 4, x + 1);
-	printw("*");
-	move(y + 4, x);
-	printw("*");
-
-	//T
-	move(y, x + 7);
-	printw("*");
-	move(y, x + 8);
-	printw("*");
-	move(y, x + 9);
-	printw("*");
-	move(y, x + 10);
-	printw("*");
-	move(y, x + 11);
-	printw("*");
-	move(y + 1, x + 9);
-	printw("*");
-	move(y + 2, x + 9);
-	printw("*");
-	move(y + 3, x + 9);
-	printw("*");
-	move(y + 4, x + 9);
-	printw("*");
-
-	//U
-	move(y, x + 14);
-	printw("*");
-	move(y + 1, x + 14);
-	printw("*");
-	move(y + 2, x + 14);
-	printw("*");
-	move(y + 3, x + 14);
-	printw("*");
-	move(y + 4, x + 14);
-	printw("*");
-	move(y, x + 18);
-	printw("*");
-	move(y + 1, x + 18);
-	printw("*");
-	move(y + 2, x + 18);
-	printw("*");
-	move(y + 3, x + 18);
-	printw("*");
-	move(y + 4, x + 18);
-	printw("*");
-	move(y + 4, x + 15);
-	printw("*");
-	move(y + 4, x + 16);
-	printw("*");
-	move(y + 4, x + 17);
-	printw("*");
-
-	//D
-	move(y, x + 21);
-	printw("*");
-	move(y + 1, x + 21);
-	printw("*");
-	move(y + 2, x + 21);
-	printw("*");
-	move(y + 3, x + 21);
-	printw("*");
-	move(y + 4, x + 21);
-	printw("*");
-	move(y, x + 22);
-	printw("*");
-	move(y, x + 23);
-	printw("*");
-	move(y, x + 24);
-	printw("*");
-	move(y + 4, x + 22);
-	printw("*");
-	move(y + 4, x + 23);
-	printw("*");
-	move(y + 4, x + 24);
-	printw("*");
-	move(y + 1, x + 25);
-	printw("*");
-	move(y + 2, x + 25);
-	printw("*");
-	move(y + 3, x + 25);
-	printw("*");
-
-	//Y
-	move(y, x + 27);
-	printw("*");
-	move(y + 1, x + 28);
-	printw("*");
-	move(y + 2, x + 29);
-	printw("*");
-	move(y + 2, x + 30);
-	printw("*");
-	move(y + 2, x + 31);
-	printw("*");
-	move(y + 1, x + 32);
-	printw("*");
-	move(y, x + 33);
-	printw("*");
-	move(y + 3, x + 30);
-	printw("*");
-	move(y + 4, x + 30);
-	printw("*");
-
-	//2번째 줄 
-	//T
-	move(y + 6, x + 4);
-	printw("*");
-	move(y + 6, x + 5);
-	printw("*");
-	move(y + 6, x + 6);
-	printw("*");
-	move(y + 6, x + 7);
-	printw("*");
-	move(y + 6, x + 8);
-	printw("*");
-	move(y + 7, x + 6);
-	printw("*");
-	move(y + 8, x + 6);
-	printw("*");
-	move(y + 9, x + 6);
-	printw("*");
-	move(y + 10, x + 6);
-	printw("*");
-
-	//I
-	move(y + 6, x + 12);
-	printw("*");
-	move(y + 6, x + 11);
-	printw("*");
-	move(y + 6, x + 13);
-	printw("*");
-	move(y + 7, x + 12);
-	printw("*");
-	move(y + 8, x + 12);
-	printw("*");
-	move(y + 9, x + 12);
-	printw("*");
-	move(y + 10, x + 12);
-	printw("*");
-	move(y + 10, x + 11);
-	printw("*");
-	move(y + 10, x + 13);
-	printw("*");
-
-	//M
-	
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
 	mvwprintw_standout(win, 14, 2, "1. Studytime Measuring", 1, arrow_select);
 	mvwprintw_standout(win, 17, 2, "2. Display stats", 2, arrow_select);
@@ -314,24 +134,41 @@ timelog tlog; //전역에 선언해야함. 그래야 sigalrm에도 작동.
 int file;//전역에 선언해야함. 그래야 sigalrm에도 작동.
 int alarmcheck=0; //덮어쓰기 or 새로 쓰기 구분 위함.
 
-void alarm_to_write(int signum){
 
+void alarm_to_write(int signum){
+	alarm(0);
 	tlog.finish_time = time(NULL);
-    	struct tm *time_info_end = localtime(&tlog.finish_time);
-    	tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
+    //struct tm *time_info_end = localtime(&tlog.finish_time);
+    tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
 	
 	if(alarmcheck==0){ //처음 쓴다
 		write(file, &tlog, sizeof(timelog));
-	 	alarmcheck=1;
-		alarm(30);
+	    alarmcheck=1;
+	    alarm(30);
 	}
-
 	else if(alarmcheck==1){ //덮어쓴다.(갱신)
 		lseek(file, -sizeof(timelog), SEEK_CUR); //덮어쓰기
 		write(file, &tlog, sizeof(timelog));
-		alarmcheck=1;
-		alarm(30);
+	    alarmcheck=1;
+	    alarm(30);
 	}
+}
+
+void make_study_dot(WINDOW* win){
+	static int position=32;
+	mvwprintw(win, 15, 24, "Studying");
+	wrefresh(win);
+	mvwprintw(win, 15, position, ".");
+	wrefresh(win);
+	sleep(1);
+	position++;
+	if(position>34){
+		mvwprintw(win, 15, 32, "   ");
+		wrefresh(win);
+		sleep(1);
+		position=32;
+	}
+	
 }
 
 void menu1(){
@@ -340,37 +177,67 @@ void menu1(){
    Studyuser studyuser;
    struct tm *time_info_start, *time_info_end;
    int key, check = 0;
+   int check_point_of_before_start=0;
    char start_time_str[20];
    char finish_time_str[20];
    char studytime_str[20];
+  	signal(SIGALRM, alarm_to_write);
+	alarm(30);
 
-   WINDOW* win = newwin(34, 60, 1, 1);
+   WINDOW* win = newwin(38, 60, 1, 1);
+	keypad(win, TRUE);
+	
+    wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
+    	mvwprintw(win, 3, 2, "Studytime Measuring");
+	mvwprintw(win, 7, 2, "Please enter the subject you want to study.");
 
-    box(win, '|', '-');
-    mvwprintw(win, 2, 3, "Please enter the subject you want to study ");
-	mvwprintw(win, 4, 3,": ");
-    wrefresh(win);
+	mvwprintw(win, 8, 33, ")");
+	mvwprintw(win, 8, 2, "(");
+	curs_set(1);
 
-	echo();
-    wgetstr(win, tlog.subject); //과목받기
-    werase(win); 
+	char input[30] = "\0";
+	int input_c;
+	int i = 0;
 
-	box(win, '|', '-');
-    wrefresh(win);
-	mvwprintw(win, 3, 3, "Press spacebar to measure study time."); 
-    mvwprintw(win,30, 45, "quit: q"); 
-    wrefresh(win);
+	while (1)
+	{
+		input_c = wgetch(win);
+		if (isalnum(input_c) || input_c == ' ')
+		{
+			if (i < 30)
+			{
+				mvwprintw(win, 8, 3 + i, "%c", input_c);
+				input[i++] = input_c;
+				input[i] = '\0';
+			}
+		}
+		if ((input_c == '\b' || input_c == 263) && i > 0)
+		{
+			mvwprintw(win, 8, 3 + --i, " ");
+			wmove(win, 8, 3 + i);
+		}
+		if (input_c == '\n') // 엔터 입력
+		{
+			curs_set(0);
+			break;
+		}
+	}
+	
+	mvwprintw(win, 16, 2, "Press spacebar to measure study time."); 
+	wrefresh(win);
+    	mvwprintw(win, 30, 45, "quit: q"); 
+    	wrefresh(win);
+	
 
+    while (1){
+		// nodelay(win, TRUE); // 키 입력 비차단 모드 설정
+        key = wgetch(win);
+		if(check_point_of_before_start==0){
+			check_point_of_before_start=1;
+		}
 
-    	while (1){
-	key = getch();
     	if (key == 'q')
       	{
-        	wclear(win);
-        	endwin();
-        	clear();
-        	wrefresh(win);
-        //exit(0);
         	return;
       	}
 
@@ -390,37 +257,32 @@ void menu1(){
                	   	return;
                	}
                 check = 1;
-        	}	
+
+				
+				
+        	}
+
+		 	
+		
       	}
 
       	if (check == 1)
       	{
-		signal(SIGALRM,alarm_to_write);
-		alarm(30);
-        	wclear(win);
+        wclear(win);
 		 	
 			while(1){
 				box(win, '|', '-');
-         			wrefresh(win);
-		 		mvwprintw(win, 15, 24, "Studying"); 
-         			wrefresh(win);
+         		wrefresh(win);
+		 		
 		 		mvwprintw(win,30, 30, "Press spacebar to stop");
 		 		wrefresh(win);
-				mvwprintw(win, 15, 32, ".");
-				wrefresh(win);
-				sleep(1);
-				mvwprintw(win, 15, 33, ".");
-				wrefresh(win);
-				sleep(1);
-				mvwprintw(win, 15, 34, ".");
-				wrefresh(win);
-				sleep(1);
-				mvwprintw(win, 15, 32, "   ");
-				wrefresh(win);
-				sleep(1);
 
-                	nodelay(win, TRUE); // 키 입력 비차단 모드 설정
-                	key = wgetch(win);
+				box(win, '|', '-');
+
+				make_study_dot(win);
+
+                nodelay(win, TRUE); // 키 입력 비차단 모드 설정
+                key = wgetch(win);
          		if (key == ' ')
          		{
             		tlog.finish_time = time(NULL);
@@ -429,33 +291,34 @@ void menu1(){
             		int hours = tlog.studytime / 3600;             // 시
             		int minutes = (int)(tlog.studytime / 60) % 60; // 분
             		int seconds_ = (int)tlog.studytime % 60;       // 초
-			if (tlog.studytime <=30.0) {
-                        // 공부시간이 30초 이하인 경우 경고 메세지 출력
+					
+					if (tlog.studytime <=5.0) { // 공부시간이 30초 이하인 경우 경고 메세지 출력
                         wclear(win);
-			box(win, '|', '-');
-         		wrefresh(win);
+						box(win, '|', '-');
+         				wrefresh(win);
                         mvwprintw(win, 15, 17, "Study time is too short!");
                         wrefresh(win);
                         sleep(1);
                         werase(win);
                         wrefresh(win);
-			continue;
+						continue;
                    	}
-		        else {
-			lseek(file, -sizeof(timelog), SEEK_CUR);
+		        	else{
+						lseek(file, -sizeof(timelog), SEEK_CUR);
                         write(file, &tlog, sizeof(timelog));
                         close(file);
                         break; 
-                    	}
-		     }
+                    }
+		    	}
 				
       		}	
 			break;
+			
 		}
    	}
+	//signal(SIGALRM,SIG_DFL);
    	chdir("..");
-   	endwin();
-   	clear(); //다 지우기
+   	wcleardel(win);
 }
 
 void menu2()
