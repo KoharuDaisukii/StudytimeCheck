@@ -897,8 +897,7 @@ void group_rank(WINDOW* win)
 	char groupid[30] = { 0 };
 	char userid[30] = { 0 };
 
-	mvwprintw(win, 3, 2, "Enter your USER ID : ");
-	mvwgetstr(win, 3, 24, userid);
+	strcpy(userid, UID);
 
 	//groupid 가지고 오기
 	int ufd = usersFd;
@@ -1016,8 +1015,8 @@ void group_rank(WINDOW* win)
 		}
 
 		// sorting 한 결과 보여주기
-		mvwprintw(win, 5, 2, "Today's <%s> ranking !", groupid);
-		int x = 7;
+		mvwprintw(win, 3, 2, "Today's <%s> ranking !", groupid);
+		int x = 5;
 		int y = 2;
 		for (int n = 0; n < i; n++) {
 			mvwprintw(win, x, y, "%d.\t%s\t%lf", n + 1, rank[n].user_name, rank[n].study_time);
