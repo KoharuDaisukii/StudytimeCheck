@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h> 
-#include <string.h> // strlen
-#include <ctype.h> // toupper, isalpha, isdigit
-#include <sys/stat.h> // mkdir
-#include <sys/types.h> // mkdir, lseek
-#include <sys/wait.h> // wait
-#include <fcntl.h> // open
-#include <dirent.h> // struct dirent
-#include <unistd.h> // mkdir, chdir, write, lseek, dup(1,2)
+#include <string.h> 
+#include <ctype.h> 
+#include <sys/stat.h> 
+#include <sys/types.h> 
+#include <sys/wait.h> 
+#include <fcntl.h> 
+#include <dirent.h> 
+#include <unistd.h> 
 #include <curses.h>
 #include <time.h> // time, struct tm
 #include "studytimecheck.h"
