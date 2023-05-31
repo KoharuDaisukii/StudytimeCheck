@@ -58,7 +58,7 @@ void group_mainscreen(WINDOW* win, int arrow_select)
 	mvwprintw_standout(win, x + 4, y, "1. Join a new group" ,1, arrow_select);
 	mvwprintw_standout(win, x + 7, y, "2. Create a new group", 2, arrow_select);
 	mvwprintw_standout(win, x + 10, y, "3. Group Ranking", 3, arrow_select);
-	mvwprintw_standout(win, x + 13, y, "4. Group Leave", 4, arrow_select);
+	mvwprintw_standout(win, x + 13, y, "4. Leave the group", 4, arrow_select);
 	wprintw_quit(win, 5, arrow_select);
 	wrefresh(win);
 }
@@ -256,6 +256,7 @@ void group_join(WINDOW* win){
 		}
 		sleep(1);
 		wclear(win);
+		return;
 	}
 	if (group_cmp == 0) {
 		// 사용자가 no_group에 속하지 않음 == 이미 그룹이 있음
@@ -272,12 +273,8 @@ void group_join(WINDOW* win){
 		}
 		sleep(1);
 		wclear(win);
+		return;
 	}
-	Studyuser s_user;
-	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
-	read(usersFd, &s_user, sizeof(Studyuser));
-	
-	chdir(s_user.group_ID);
 	char menu;
 	while ((menu = getch()) != 'q');
 
@@ -285,16 +282,16 @@ void group_join(WINDOW* win){
 	wclear(win);
 	wrefresh(win);
 	return;
+
 }
 
 void menu3_screen_join(WINDOW* win) {
 	
-	wfill(win, 6, 1, 34, 56, " ");
-	mvwprintw(win, 3 , 2, "Group - Join");
+	wclear(win);
+	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
 	wrefresh(win);
 	noecho();
 
-	
 	// getcwd를 사용해서 ./users/no_group 인 것을 확인함
 	// ./users로 디렉토리 경로 변경
 	if (chdir("..") != 0) {
@@ -333,15 +330,15 @@ void menu3_screen_join(WINDOW* win) {
 		// group.txt 파일 읽기
 		// groupinfo 단위로 읽어옴
 		while (read(fd, &rd, sizeof(groupinfo))) {
-			strcpy(save[index].group_name, rd.group_name);
+			strcpy(save[index].group_name,rd.group_name);
 			save[index].group_users = rd.group_users;
 			index++;
 		}
 		int ad = 0;
 		int a = 0;
-		mvwprintw(win, 6, 2, "Here is a list of groups you can join !");
+		mvwprintw(win, 3, 2, "Here is a list of groups you can join !");
 		for (int i = 0; i < index; i++) {
-			mvwprintw(win, i+8+a, 2, "%d : %s ( %d ) ", i+1, save[i].group_name, save[i].group_users);
+			mvwprintw(win, i+5+a, 2, "%d : %s ( %d ) ", i+1, save[i].group_name, save[i].group_users);
 			a++;
 			if (i == index - 1) {
 				ad = a;
@@ -361,12 +358,11 @@ void menu3_screen_join(WINDOW* win) {
 			mvwprintw(win, 10, y, " %d ...", 4 - t);
 			wrefresh(win);
 		}
+		sleep(1);
+		wclear(win);
+		return;
 	}
 	// 사용자에게 보여줌
-	Studyuser s_user;
-	lseek(usersFd, -sizeof(Studyuser), SEEK_CUR);
-	read(usersFd, &s_user, sizeof(Studyuser));
-	chdir(s_user.group_ID);
 }
 
 
@@ -417,7 +413,6 @@ void group_create(WINDOW* win)
 		}
 		sleep(1);
 		wclear(win);
-		Studyuser s_user;
 		return;
 	}
 	else // group_flag == 0, 생성된 그룹이 없을 때
@@ -432,7 +427,6 @@ void group_create(WINDOW* win)
 
 		// ./users 안에 groupid 그룹을 생성한다
 		if (mkdir(groupid, 0755) == -1) {
-			chdir(groupid);
 			perror("mkdir");
 			return;
 		}
@@ -510,6 +504,7 @@ void group_create(WINDOW* win)
 					strcpy(j_user.group_ID, groupid); // GROUP ID is copy to j_user
 					lseek(ufd, -sizeof(Studyuser), SEEK_CUR); // moving cursor to start point
 					write(ufd, &j_user, sizeof(Studyuser)); // replacing
+					wrefresh(win);
 				}
 			}
 			// fd 닫아주기
@@ -522,21 +517,20 @@ void group_create(WINDOW* win)
 			wrefresh(win);
 		}
 	}
-	
-	
-	if(chdir(groupid) == -1)
-		exit(1);
-	sleep(2);
+
+	char menu;
+	while ((menu = getch()) != 'q');
+
 	free(groupid);
+	wclear(win);
 	wrefresh(win);
 	return;
 }
 
 void group_leave(WINDOW* win) 
 {
-
 	wclear(win);
-	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+'); 
+	box(win, '|', '-');
 	wrefresh(win);
 
 	echo();
@@ -611,10 +605,10 @@ void group_leave(WINDOW* win)
 				// 현재 작업 경로 확인
 				char path[50];
 				getcwd(path, 50);
-				mvwprintw(win, 5, 2, "path : %s", path);
+				mvwprintw(win, 5, 2,"path : %s", path);
 				wrefresh(win);
 
-				sleep(3);
+				sleep(3);			
 
 				// group.txt 변경하기
 				int fd2;
@@ -728,10 +722,11 @@ void group_leave(WINDOW* win)
 	char menu;
 	while ((menu = getch()) != 'q');
 
-
+	
 	wclear(win);
 	wrefresh(win);
 	return;
+
 
 }
 void group_rank(WINDOW* win) 
