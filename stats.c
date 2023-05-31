@@ -12,9 +12,7 @@
 #define TEST 0
 
 void wsctotime_month(WINDOW* win, int seconds);
-
 int monthlast_calculator(int month);
-
 
 void wsctotime(WINDOW* win, int seconds)
 {
