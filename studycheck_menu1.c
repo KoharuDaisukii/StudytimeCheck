@@ -324,7 +324,7 @@ int alarmcheck=0; //덮어쓰기 or 새로 쓰기 구분 위함.
 
 
 void alarm_to_write(int signum){
-
+	alarm(0);
 	tlog.finish_time = time(NULL);
     //struct tm *time_info_end = localtime(&tlog.finish_time);
     tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
@@ -332,14 +332,13 @@ void alarm_to_write(int signum){
 	if(alarmcheck==0){ //처음 쓴다
 		write(file, &tlog, sizeof(timelog));
 	    alarmcheck=1;
-	    alarm(5);
+	    alarm(30);
 	}
-
 	else if(alarmcheck==1){ //덮어쓴다.(갱신)
 		lseek(file, -sizeof(timelog), SEEK_CUR); //덮어쓰기
 		write(file, &tlog, sizeof(timelog));
 	    alarmcheck=1;
-	    alarm(5);
+	    alarm(30);
 	}
 }
 
@@ -354,7 +353,6 @@ void make_study_dot(WINDOW* win){
 	if(position>34){
 		mvwprintw(win, 15, 32, "   ");
 		wrefresh(win);
-		sleep(1);
 		position=32;
 	}
 	
@@ -370,42 +368,64 @@ void menu1(){
    char start_time_str[20];
    char finish_time_str[20];
    char studytime_str[20];
-  
+  	signal(SIGALRM, alarm_to_write);
+	alarm(30);
 
    WINDOW* win = newwin(38, 60, 1, 1);
-
-    box(win, '|', '-');
-    wrefresh(win);
-    mvwprintw(win, 2, 3, "Please enter the subject you want to study ");
-	mvwprintw(win, 4, 3,": ");
-    wrefresh(win);
-
-	echo();
-    wgetstr(win, tlog.subject); //과목받기
-	wclear(win);
+	keypad(win, TRUE);
 	
-	box(win, '|', '-');
-    wrefresh(win);
-	mvwprintw(win, 3, 3, "Press spacebar to measure study time."); 
-	wrefresh(win);
-    mvwprintw(win,30, 45, "quit: q"); 
-    wrefresh(win);
+    wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
+    	mvwprintw(win, 3, 2, "Studytime Measuring");
+	mvwprintw(win, 7, 2, "Please enter the subject you want to study.");
 
-    while (1){
-		nodelay(win, TRUE); // 키 입력 비차단 모드 설정
+	mvwprintw(win, 8, 33, ")");
+	mvwprintw(win, 8, 2, "(");
+	curs_set(1);
+
+	char input[30] = "\0";
+	int input_c;
+	int i = 0;
+
+	while (1)
+	{
+		input_c = wgetch(win);
+		if (isalnum(input_c) || input_c == ' ')
+		{
+			if (i < 30)
+			{
+				mvwprintw(win, 8, 3 + i, "%c", input_c);
+				input[i++] = input_c;
+				input[i] = '\0';
+			}
+		}
+		if ((input_c == '\b' || input_c == 263) && i > 0)
+		{
+			mvwprintw(win, 8, 3 + --i, " ");
+			wmove(win, 8, 3 + i);
+		}
+		if (input_c == '\n') // 엔터 입력
+		{
+			curs_set(0);
+			break;
+		}
+	}
+	strcpy(tlog.subject, input);
+	wfill(win, 2, 2, 10, 50, " ");
+	mvwprintw(win, 16, 10, "Press spacebar to measure study time."); 
+	wrefresh(win);
+    	mvwprintw(win, 30, 45, "quit: q"); 
+    	wrefresh(win);
+	
+
+    	while (1){
+		// nodelay(win, TRUE); // 키 입력 비차단 모드 설정
         key = wgetch(win);
 		if(check_point_of_before_start==0){
-			signal(SIGALRM, alarm_to_write);
-			alarm(5);
 			check_point_of_before_start=1;
 		}
 
     	if (key == 'q')
       	{
-        	wclear(win);
-        	endwin();
-        	clear();
-        	wrefresh(win);
         	return;
       	}
 
@@ -440,10 +460,9 @@ void menu1(){
 		 	
 			while(1){
 				box(win, '|', '-');
-         		wrefresh(win);
+
 		 		
-		 		mvwprintw(win,30, 30, "Press spacebar to stop");
-		 		wrefresh(win);
+		 		mvwprintw(win, 30, 30, "Press spacebar to stop");
 
 				box(win, '|', '-');
 
@@ -462,7 +481,7 @@ void menu1(){
 					
 					if (tlog.studytime <=5.0) { // 공부시간이 30초 이하인 경우 경고 메세지 출력
                         wclear(win);
-						box(win, '|', '-');
+			box(win, '|', '-');
          				wrefresh(win);
                         mvwprintw(win, 15, 17, "Study time is too short!");
                         wrefresh(win);
@@ -486,8 +505,7 @@ void menu1(){
    	}
 	//signal(SIGALRM,SIG_DFL);
    	chdir("..");
-   	endwin();
-   	clear(); //다 지우기
+   	wcleardel(win);
 }
 /////여기까지 긁어요.
 
