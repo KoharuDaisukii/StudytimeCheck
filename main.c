@@ -85,6 +85,7 @@ int arrow_convert(int key_select, int arrow_select, int bound)
 		if(arrow_select < 1)
 			arrow_select = bound;
 	}
+	
 	return arrow_select;
 }
 
