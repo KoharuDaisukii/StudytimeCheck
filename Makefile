@@ -15,7 +15,7 @@ stats.o: stats.c studytimecheck.h varlib.h
 settings.o: settings.c studytimecheck.h varlib.h	
 	gcc -c settings.c
 	
-group.o: group.c studytimecheck.h varlib.h
+group.o: group.c studytimecheck.h varlib.h login.h
 	gcc -c group.c
 	
 clean:
