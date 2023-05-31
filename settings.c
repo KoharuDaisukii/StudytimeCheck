@@ -156,7 +156,7 @@ void delete_account(WINDOW* win)
 				if ((input_c == '\b' || input_c == 263) && i > 0) // 백스페이스로 0글자 이하로 가는 거 blocking
 				{
 					mvwprintw(win, 19, 46 + --i, " ");
-					move(19, 1 + i);
+					wmove(win, 19, 46 + i);
 				}
 				if (input_c == '\n') // 엔터 입력
 				{

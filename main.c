@@ -97,10 +97,11 @@ void wprintw_quit(WINDOW* win, int line_num, int arrow_select)
 void main_screen(WINDOW* win, int arrow_select)
 {
 	wborder(win, '|', '|', '-', '-', '+', '+', '+', '+');
-	mvwprintw_standout(win, 14, 2, "1. Studytime Measuring", 1, arrow_select);
-	mvwprintw_standout(win, 17, 2, "2. Display stats", 2, arrow_select);
-	mvwprintw_standout(win, 20, 2, "3. Group", 3, arrow_select);
-	mvwprintw_standout(win, 23, 2, "4. Settings", 4, arrow_select);
+	mvwprintw(win, 3, 2, "StudytimeCheck");
+	mvwprintw_standout(win, 7, 2, "1. Studytime Measuring", 1, arrow_select);
+	mvwprintw_standout(win, 10, 2, "2. Display stats", 2, arrow_select);
+	mvwprintw_standout(win, 13, 2, "3. Group", 3, arrow_select);
+	mvwprintw_standout(win, 16, 2, "4. Settings", 4, arrow_select);
 	wprintw_quit(win, 5, arrow_select);
 	
 	wrefresh(win);
@@ -133,13 +134,16 @@ void wfill(WINDOW* win, int y1, int x1, int y2, int x2, char* ch)
 timelog tlog; //전역에 선언해야함. 그래야 sigalrm에도 작동.
 int file;//전역에 선언해야함. 그래야 sigalrm에도 작동.
 int alarmcheck=0; //덮어쓰기 or 새로 쓰기 구분 위함.
-
+double time_differ = 0.0;
 
 void alarm_to_write(int signum){
+
 	alarm(0);
 	tlog.finish_time = time(NULL);
+	time_differ = difftime(tlog.finish_time, tlog.start_time);
+	
     //struct tm *time_info_end = localtime(&tlog.finish_time);
-    tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
+    tlog.studytime = time_differ;
 	
 	if(alarmcheck==0){ //처음 쓴다
 		write(file, &tlog, sizeof(timelog));
@@ -165,7 +169,6 @@ void make_study_dot(WINDOW* win){
 	if(position>34){
 		mvwprintw(win, 15, 32, "   ");
 		wrefresh(win);
-		sleep(1);
 		position=32;
 	}
 	
@@ -222,14 +225,15 @@ void menu1(){
 			break;
 		}
 	}
-	
-	mvwprintw(win, 16, 2, "Press spacebar to measure study time."); 
+	strcpy(tlog.subject, input);
+	wfill(win, 2, 2, 10, 50, " ");
+	mvwprintw(win, 16, 10, "Press spacebar to measure study time."); 
 	wrefresh(win);
     	mvwprintw(win, 30, 45, "quit: q"); 
     	wrefresh(win);
 	
 
-    while (1){
+    	while (1){
 		// nodelay(win, TRUE); // 키 입력 비차단 모드 설정
         key = wgetch(win);
 		if(check_point_of_before_start==0){
@@ -264,55 +268,47 @@ void menu1(){
 
 		 	
 		
-      	}
+      	
 
-      	if (check == 1)
-      	{
-        wclear(win);
+      		if (check == 1)
+      		{
+      	 	 	wclear(win);
 		 	
-			while(1){
-				box(win, '|', '-');
-         		wrefresh(win);
-		 		
-		 		mvwprintw(win,30, 30, "Press spacebar to stop");
-		 		wrefresh(win);
-
+			while(1)
+			{
 				box(win, '|', '-');
 
+		 		mvwprintw(win, 30, 30, "Press spacebar to stop");
+				box(win, '|', '-');
 				make_study_dot(win);
 
-                nodelay(win, TRUE); // 키 입력 비차단 모드 설정
-                key = wgetch(win);
-         		if (key == ' ')
-         		{
-            		tlog.finish_time = time(NULL);
-            		time_info_end = localtime(&tlog.finish_time);
-            		tlog.studytime = difftime(tlog.finish_time, tlog.start_time);
-            		int hours = tlog.studytime / 3600;             // 시
-            		int minutes = (int)(tlog.studytime / 60) % 60; // 분
-            		int seconds_ = (int)tlog.studytime % 60;       // 초
+               	 	nodelay(win, TRUE); // 키 입력 비차단 모드 설정
+                		key = wgetch(win);
+         			if (key == ' ')
+         			{
+            				tlog.finish_time = time(NULL);
+            				time_info_end = localtime(&tlog.finish_time);
+            				time_differ = difftime(tlog.finish_time, tlog.start_time);
+            				//if(time_differ <= 30.0)
+            					tlog.studytime = time_differ;
+            				//else 
+            				//	tlog.studytime = time_differ - 20;
+            				int hours = tlog.studytime / 3600;             // 시
+            				int minutes = (int)(tlog.studytime / 60) % 60; // 분
+            				int seconds_ = (int)tlog.studytime % 60;       // 초
 					
-					if (tlog.studytime <=5.0) { // 공부시간이 30초 이하인 경우 경고 메세지 출력
-                        wclear(win);
-						box(win, '|', '-');
-         				wrefresh(win);
-                        mvwprintw(win, 15, 17, "Study time is too short!");
-                        wrefresh(win);
-                        sleep(1);
-                        werase(win);
-                        wrefresh(win);
-						continue;
-                   	}
-		        	else{
-						lseek(file, -sizeof(timelog), SEEK_CUR);
-                        write(file, &tlog, sizeof(timelog));
-                        close(file);
-                        break; 
-                    }
-		    	}
-				
-      		}	
+
+					lseek(file, -sizeof(timelog), SEEK_CUR);
+                  	      		write(file, &tlog, sizeof(timelog));
+                  	      		close(file);
+                  	     		break;
+                    		}			
+			}
 			break;
+		}
+				
+      			
+			//break;
 			
 		}
    	}
