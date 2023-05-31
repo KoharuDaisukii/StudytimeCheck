@@ -25,7 +25,6 @@ typedef struct timelog // 공부 시간 기록을 저장하는 구조체
 	double studytime; // 공부 시간
 } timelog;
 
-
 extern char UID[11];
 extern int user_dead;
 
